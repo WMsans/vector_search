@@ -21,7 +21,6 @@ def index_files():
     files = drive.list_docx_files()
     
     Document.query.filter_by(user_id=current_user.id).delete()
-    Chunk.query.filter(Document.user_id == current_user.id).delete()
     db.session.commit()
     
     indexed_count = 0
