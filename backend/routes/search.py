@@ -76,7 +76,8 @@ def search():
         results.append({
             'title': doc.title,
             'text': chunk.text,
-            'document_id': doc.id
+            'document_id': doc.id,
+            'drive_file_id': doc.drive_file_id
         })
     
     return {'results': results}
