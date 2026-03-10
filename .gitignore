@@ -5,3 +5,5 @@ __pycache__/
 .Python
 venv/
 *.db
+/backend_setup.sh
+/frontend_setup.sh
