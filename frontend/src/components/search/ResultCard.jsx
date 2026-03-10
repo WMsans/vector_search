@@ -1,4 +1,4 @@
-import { DocumentTextIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ClipboardDocumentIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 export default function ResultCard({ result, rank, onClick }) {
@@ -9,6 +9,13 @@ export default function ResultCard({ result, rank, onClick }) {
     await navigator.clipboard.writeText(result.text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpen = (e) => {
+    e.stopPropagation();
+    if (result.drive_file_id) {
+      window.open(`https://docs.google.com/document/d/${result.drive_file_id}/edit`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const wordCount = result.text.split(/\s+/).length;
@@ -46,13 +53,24 @@ export default function ResultCard({ result, rank, onClick }) {
           <span>{wordCount} words</span>
         </div>
         
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <ClipboardDocumentIcon className="h-4 w-4" />
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          >
+            <ClipboardDocumentIcon className="h-4 w-4" />
+            {copied ? 'Copied!' : 'Copy'}
+          </button>
+          {result.drive_file_id && (
+            <button
+              onClick={handleOpen}
+              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              title="Open in Google Docs"
+            >
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
