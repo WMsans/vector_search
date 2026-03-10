@@ -1,4 +1,4 @@
-import { XMarkIcon, DocumentTextIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, DocumentTextIcon, ClipboardDocumentIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 
 export default function ResultModal({ result, onClose }) {
@@ -10,6 +10,12 @@ export default function ResultModal({ result, onClose }) {
     await navigator.clipboard.writeText(result.text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleOpen = () => {
+    if (result.drive_file_id) {
+      window.open(`https://docs.google.com/document/d/${result.drive_file_id}/edit`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const wordCount = result.text.split(/\s+/).length;
@@ -60,6 +66,16 @@ export default function ResultModal({ result, onClose }) {
             <ClipboardDocumentIcon className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy Text'}
           </button>
+          {result.drive_file_id && (
+            <button
+              onClick={handleOpen}
+              className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 transition-colors"
+              title="Open in Google Docs"
+            >
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+              Open in Docs
+            </button>
+          )}
           <button
             onClick={onClose}
             className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
