@@ -20,9 +20,10 @@ class VectorSearchSystem:
     def embed_query(self, query: str) -> torch.Tensor:
         return self.model.encode([query], prompt_name="query", convert_to_tensor=True, show_progress_bar=False)
     
-    def search(self, query_embedding: torch.Tensor, chunk_embeddings: torch.Tensor, top_k: int = 3) -> List[int]:
+    def search(self, query_embedding: torch.Tensor, chunk_embeddings: torch.Tensor, top_k: int = 3) -> tuple:
         similarities = self.model.similarity(query_embedding, chunk_embeddings)[0]
         top_k_indices = similarities.argsort(descending=True)[:top_k]
-        return top_k_indices.tolist()
+        top_k_scores = [similarities[i].item() for i in top_k_indices]
+        return top_k_indices.tolist(), top_k_scores
 
 vector_search = VectorSearchSystem()

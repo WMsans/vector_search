@@ -67,17 +67,18 @@ def search():
     ])
     
     query_embedding = vector_search.embed_query(query)
-    indices = vector_search.search(query_embedding, chunk_embeddings, top_k)
+    indices, scores = vector_search.search(query_embedding, chunk_embeddings, top_k)
     
     results = []
-    for idx in indices:
+    for idx, score in zip(indices, scores):
         chunk = chunks[idx]
         doc = chunk.document
         results.append({
             'title': doc.title,
             'text': chunk.text,
             'document_id': doc.id,
-            'drive_file_id': doc.drive_file_id
+            'drive_file_id': doc.drive_file_id,
+            'score': round(score * 100)
         })
     
     return {'results': results}
