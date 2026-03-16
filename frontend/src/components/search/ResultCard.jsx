@@ -35,7 +35,7 @@ export default function ResultCard({ result, rank, onClick }) {
           </h3>
         </div>
         <span className="flex-shrink-0 ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-          95%
+          {result.score}%
         </span>
       </div>
 
