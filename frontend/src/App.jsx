@@ -35,20 +35,27 @@ function Dashboard() {
 
   const handleIndex = async () => {
     startIndexing();
+    updateIndexingStatus({ phase: 'scanning', message: 'Scanning Google Drive...', progress: 10 });
     
-    try {
-      updateIndexingStatus({ phase: 'scanning', message: 'Scanning Google Drive...', progress: 10 });
+    const eventSource = new EventSource('/api/index-stream', { withCredentials: true });
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      updateIndexingStatus(data);
       
-      const res = await api.post('/api/index');
-      
-      finishIndexing(res.data.indexed_documents);
-      setDocumentCount(res.data.indexed_documents);
-      setLastIndexed(new Date().toISOString());
-    } catch (err) {
+      if (data.phase === 'complete') {
+        eventSource.close();
+        setDocumentCount(data.indexed_documents);
+        setLastIndexed(new Date().toISOString());
+      }
+    };
+    
+    eventSource.onerror = (err) => {
       console.error('Indexing failed:', err);
+      eventSource.close();
       addToast('Failed to index documents. Please try again.', 'error');
       goToOnboarding();
-    }
+    };
   };
 
   const handleReindex = () => {

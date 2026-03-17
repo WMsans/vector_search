@@ -1,4 +1,5 @@
-from flask import Blueprint, request, jsonify, current_app
+import json
+from flask import Blueprint, request, jsonify, current_app, Response, stream_with_context
 from flask_login import login_required, current_user
 from models import db, Document, Chunk
 from services.vector_search import vector_search
@@ -49,6 +50,61 @@ def index_files():
     
     db.session.commit()
     return {'indexed_documents': indexed_count}
+
+
+@search_bp.route('/index-stream', methods=['GET'])
+@login_required
+def index_files_stream():
+    def generate():
+        drive = DriveService(current_user.access_token, current_user.refresh_token)
+        
+        yield f"data: {json.dumps({'phase': 'scanning', 'message': 'Scanning Google Drive...', 'progress': 10})}\n\n"
+        
+        files = drive.list_docx_files()
+        total_files = len(files)
+        
+        if total_files == 0:
+            yield f"data: {json.dumps({'phase': 'complete', 'message': 'No files found to index.', 'progress': 100, 'indexed_documents': 0})}\n\n"
+            return
+        
+        Document.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        
+        yield f"data: {json.dumps({'phase': 'indexing', 'message': f'Found {total_files} files. Starting indexing...', 'progress': 15, 'total': total_files, 'current': 0})}\n\n"
+        
+        indexed_count = 0
+        for i, file in enumerate(files):
+            try:
+                progress = int(15 + (i / total_files) * 80)
+                message = f"Processing {file['name']}..."
+                data = json.dumps({'phase': 'indexing', 'message': message, 'progress': progress, 'total': total_files, 'current': i + 1})
+                yield f"data: {data}\n\n"
+                
+                text = drive.download_and_extract_text(file['id'])
+                if not text:
+                    continue
+                
+                doc = Document(user_id=current_user.id, drive_file_id=file['id'], title=file['name'])
+                db.session.add(doc)
+                db.session.flush()
+                
+                chunks = vector_search.simple_text_chunker(text)
+                embeddings = vector_search.embed_chunks(chunks)
+                
+                for j, chunk_text in enumerate(chunks):
+                    chunk = Chunk(document_id=doc.id, text=chunk_text)
+                    chunk.embedding = embeddings[j].cpu().numpy().tobytes()
+                    db.session.add(chunk)
+                
+                indexed_count += 1
+            except Exception as e:
+                print(f"Error indexing {file['name']}: {e}")
+                continue
+        
+        db.session.commit()
+        yield f"data: {json.dumps({'phase': 'complete', 'message': 'Indexing complete!', 'progress': 100, 'indexed_documents': indexed_count})}\n\n"
+    
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
 
 @search_bp.route('/search', methods=['POST'])
 @login_required
