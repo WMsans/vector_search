@@ -31,9 +31,13 @@ async function extractPdf(arrayBuffer) {
 
 async function extractPptx(arrayBuffer) {
   const zip = await JSZip.loadAsync(arrayBuffer);
-  const slideFiles = Object.keys(zip.files).filter(name => 
-    name.match(/^ppt\/slides\/slide\d+\.xml$/)
-  );
+  const slideFiles = Object.keys(zip.files)
+    .filter(name => name.match(/^ppt\/slides\/slide\d+\.xml$/))
+    .sort((a, b) => {
+      const numA = parseInt(a.match(/\d+/)[0]);
+      const numB = parseInt(b.match(/\d+/)[0]);
+      return numA - numB;
+    });
   
   const textParts = [];
   for (const slideFile of slideFiles) {
