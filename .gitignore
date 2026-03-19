@@ -1,10 +1,2 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-venv/
-*.db
-/backend_setup.sh
-/frontend_setup.sh
+dist/
 /data
