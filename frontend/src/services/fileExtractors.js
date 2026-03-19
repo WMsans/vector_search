@@ -1,3 +1,4 @@
+import JSZip from 'jszip';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -29,15 +30,18 @@ async function extractPdf(arrayBuffer) {
 }
 
 async function extractPptx(arrayBuffer) {
-  const ds = new DecompressionStream('gzip');
-  const decompressedStream = new Response(arrayBuffer).body.pipeThrough(ds);
-  const decompressed = await decompressedStream.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+  const slideFiles = Object.keys(zip.files).filter(name => 
+    name.match(/^ppt\/slides\/slide\d+\.xml$/)
+  );
   
-  const textDecoder = new TextDecoder();
-  const text = textDecoder.decode(decompressed);
-  
-  const slideTexts = text.match(/<a:t>([^<]*)<\/a:t>/g) || [];
-  return slideTexts.map(t => t.replace(/<\/?a:t>/g, '')).join(' ');
+  const textParts = [];
+  for (const slideFile of slideFiles) {
+    const content = await zip.file(slideFile).async('text');
+    const matches = content.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+    textParts.push(...matches.map(t => t.replace(/<\/?a:t>/g, '')));
+  }
+  return textParts.join(' ');
 }
 
 const EXTRACTORS = {
