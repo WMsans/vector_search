@@ -2,7 +2,7 @@ import Dexie from 'dexie';
 
 const db = new Dexie('vectorSearchDB');
 
-db.version(1).stores({
+db.version(2).stores({
   userProfile: 'googleId',
   documents: '++id, googleId, driveFileId, title, fileType, indexedAt, [googleId+driveFileId]',
   chunks: '++id, documentId, googleId',
