@@ -75,5 +75,9 @@ export async function extractText(arrayBuffer, filename) {
   if (!extractor) {
     return '';
   }
-  return extractor.extract(arrayBuffer);
+  try {
+    return await extractor.extract(arrayBuffer);
+  } catch {
+    return '';
+  }
 }
