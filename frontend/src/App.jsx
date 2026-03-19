@@ -34,8 +34,11 @@ function Dashboard() {
 
   useEffect(() => {
     if (!user?.googleId) return;
+    let mounted = true;
+
     getIndexStatus(user.googleId)
       .then(status => {
+        if (!mounted) return;
         setDocumentCount(status.documentCount);
         setLastIndexed(status.lastIndexedAt);
         if (status.indexed) {
@@ -45,10 +48,13 @@ function Dashboard() {
         }
       })
       .catch(err => {
+        if (!mounted) return;
         console.error('Failed to check indexing status:', err);
         addToast('Failed to check indexing status', 'error');
       });
-  }, [user?.googleId]);
+
+    return () => { mounted = false; };
+  }, [user?.googleId, goToReady, goToOnboarding, addToast]);
 
   const handleIndex = async () => {
     startIndexing();
@@ -126,6 +132,7 @@ function Dashboard() {
           console.error(`Failed to process ${file.name}:`, err);
           if (err.status === 401) {
             addToast('Session expired. Please sign in again.', 'error');
+            goToOnboarding();
             return;
           }
           skipped++;
@@ -170,6 +177,7 @@ function Dashboard() {
     setIsSearching(true);
     startSearching();
     setResults(null);
+    setSelectedResult(null);
 
     try {
       // Load model if not loaded
