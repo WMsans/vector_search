@@ -114,10 +114,10 @@ function Dashboard() {
             indexedAt: new Date(),
           });
 
-          const chunkRecords = chunks.map((chunkText, idx) => ({
+          const chunkRecords = chunks.map((text, idx) => ({
             documentId: docId,
             googleId: user.googleId,
-            text: chunkText,
+            text: text,
             embedding: embeddings[idx].buffer,
           }));
           await saveChunks(chunkRecords);
