@@ -37,6 +37,10 @@ export async function listFiles(accessToken, extensions = ['docx'], maxResults =
     }
   });
   
+  if (mimeTypes.length === 0) {
+    return [];
+  }
+  
   const mimeQuery = mimeTypes.map(m => `mimeType='${m}'`).join(' or ');
   const query = `(${mimeQuery}) and trashed=false`;
   const fields = 'files(id,name,mimeType)';
