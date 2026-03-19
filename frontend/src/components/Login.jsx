@@ -47,7 +47,7 @@ export default function Login() {
         </div>
 
         <p className="text-xs text-gray-500 text-center mt-6">
-          Your documents stay private. We only read .docx files you choose to index.
+          Your documents stay private, locally. We only read files you choose to index.
         </p>
       </div>
     </div>
