@@ -23,7 +23,7 @@ function chunkText(text, chunkSize = 50, overlap = 5) {
 }
 
 function Dashboard() {
-  const { appState, indexingStatus, startIndexing, updateIndexingStatus, finishIndexing, goToReady, goToOnboarding, startSearching, finishSearching } = useAppState();
+  const { appState, indexingStatus, startIndexing, updateIndexingStatus, goToReady, goToOnboarding, startSearching, finishSearching } = useAppState();
   const { user, accessToken } = useAuth();
   const { addToast } = useToast();
   const [documentCount, setDocumentCount] = useState(0);
