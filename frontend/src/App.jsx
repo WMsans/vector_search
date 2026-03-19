@@ -6,10 +6,10 @@ import { Layout, TopBar } from './components/layout';
 import Login from './components/Login';
 import { ResultsList, ResultModal } from './components/search';
 import { OnboardingPrompt, IndexProgress } from './components/indexing';
-import { listDocxFiles, downloadFile } from './services/drive';
+import { listFiles, downloadFile } from './services/drive';
+import { extractText } from './services/fileExtractors';
 import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments } from './services/storage';
 import { loadModel, embedChunks, embedQuery, search, isModelLoaded } from './services/embeddings';
-import mammoth from 'mammoth';
 
 function chunkText(text, chunkSize = 50, overlap = 5) {
   const words = text.split(/\s+/).filter(w => w.length > 0);
@@ -56,11 +56,10 @@ function Dashboard() {
     return () => { mounted = false; };
   }, [user?.googleId, goToReady, goToOnboarding, addToast]);
 
-  const handleIndex = async () => {
+  const handleIndex = async (selectedTypes = ['docx']) => {
     startIndexing();
 
     try {
-      // Phase 1: Load model if needed
       if (!isModelLoaded()) {
         updateIndexingStatus({ phase: 'loading', message: 'Loading AI model...', progress: 0 });
         await loadModel((progress) => {
@@ -70,20 +69,17 @@ function Dashboard() {
         });
       }
 
-      // Phase 2: Scan Drive
       updateIndexingStatus({ phase: 'scanning', message: 'Scanning Google Drive...', progress: 30 });
-      const files = await listDocxFiles(accessToken);
+      const files = await listFiles(accessToken, selectedTypes);
 
       if (files.length === 0) {
-        updateIndexingStatus({ phase: 'complete', message: 'No .docx files found', progress: 100, documentCount: 0 });
+        updateIndexingStatus({ phase: 'complete', message: 'No files found', progress: 100, documentCount: 0 });
         setDocumentCount(0);
         return;
       }
 
-      // Phase 3: Delete existing data
       await deleteAllDocuments(user.googleId);
 
-      // Phase 4: Process each file
       let skipped = 0;
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -97,27 +93,24 @@ function Dashboard() {
         });
 
         try {
-          // Download .docx
           const arrayBuffer = await downloadFile(accessToken, file.id);
 
-          // Parse with mammoth
-          const { value: text } = await mammoth.extractRawText({ arrayBuffer });
+          const text = await extractText(arrayBuffer, file.name);
           if (!text || text.trim().length === 0) {
             skipped++;
             continue;
           }
 
-          // Chunk text
           const chunks = chunkText(text);
 
-          // Embed chunks
           const embeddings = await embedChunks(chunks);
 
-          // Save to IndexedDB
+          const fileType = file.name.split('.').pop()?.toLowerCase() || 'unknown';
           const docId = await saveDocument({
             googleId: user.googleId,
             driveFileId: file.id,
             title: file.name,
+            fileType: fileType,
             indexedAt: new Date(),
           });
 
@@ -139,7 +132,6 @@ function Dashboard() {
         }
       }
 
-      // Phase 5: Complete
       const indexedCount = files.length - skipped;
       setDocumentCount(indexedCount);
       setLastIndexed(new Date().toISOString());
@@ -166,7 +158,7 @@ function Dashboard() {
 
   const handleReindex = () => {
     setResults(null);
-    handleIndex();
+    handleIndex(['docx', 'pdf', 'pptx', 'txt']);
   };
 
   const handleIndexingComplete = () => {
