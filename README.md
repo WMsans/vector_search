@@ -1,6 +1,6 @@
 # Vector Search
 
-Search your Google Drive .docx files with semantic vector search. Runs entirely in your browser -- no server required.
+Search your Google Drive documents with semantic vector search. Supports DOCX, PDF, PPTX, and TXT files. Runs entirely in your browser -- no server required.
 
 ## Setup
 
@@ -29,7 +29,7 @@ Set the `VITE_GOOGLE_CLIENT_ID` secret in your GitHub repo settings, then push t
 ## How It Works
 
 1. Sign in with Google (client-side OAuth)
-2. Click "Index My Drive" to scan and embed your .docx files
+2. Select file types and click "Index My Drive" to scan and embed your documents
 3. Search your documents with natural language queries
 
 All processing (embedding, search) happens in your browser using a Web Worker with the e5-base-v2 ONNX model. Documents and embeddings are stored in IndexedDB.

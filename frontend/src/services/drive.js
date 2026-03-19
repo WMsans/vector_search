@@ -1,3 +1,5 @@
+import { getMimeTypes } from './fileExtractors';
+
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const USERINFO_API = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
@@ -22,9 +24,16 @@ export async function getUserInfo(accessToken) {
   return res.json();
 }
 
-export async function listDocxFiles(accessToken, maxResults = 1000) {
-  const query = "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' and trashed=false";
-  const fields = 'files(id,name)';
+export async function listFiles(accessToken, extensions = ['docx'], maxResults = 1000) {
+  const mimeTypes = getMimeTypes(extensions);
+  
+  if (mimeTypes.length === 0) {
+    return [];
+  }
+  
+  const mimeQuery = mimeTypes.map(m => `mimeType='${m}'`).join(' or ');
+  const query = `(${mimeQuery}) and trashed=false`;
+  const fields = 'files(id,name,mimeType)';
   const url = `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=${maxResults}`;
   const res = await fetchWithAuth(url, accessToken);
   const data = await res.json();

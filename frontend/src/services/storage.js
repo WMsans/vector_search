@@ -2,9 +2,9 @@ import Dexie from 'dexie';
 
 const db = new Dexie('vectorSearchDB');
 
-db.version(1).stores({
+db.version(2).stores({
   userProfile: 'googleId',
-  documents: '++id, googleId, driveFileId, [googleId+driveFileId]',
+  documents: '++id, googleId, driveFileId, title, fileType, indexedAt, [googleId+driveFileId]',
   chunks: '++id, documentId, googleId',
 });
 
@@ -21,7 +21,13 @@ export async function getDocuments(googleId) {
 }
 
 export async function saveDocument(doc) {
-  return db.documents.add(doc);
+  return db.documents.add({
+    googleId: doc.googleId,
+    driveFileId: doc.driveFileId,
+    title: doc.title,
+    fileType: doc.fileType || 'docx',
+    indexedAt: doc.indexedAt,
+  });
 }
 
 export async function deleteAllDocuments(googleId) {
