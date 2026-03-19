@@ -1,3 +1,5 @@
+import { getMimeTypes } from './fileExtractors';
+
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const USERINFO_API = 'https://www.googleapis.com/oauth2/v2/userinfo';
 
@@ -23,19 +25,7 @@ export async function getUserInfo(accessToken) {
 }
 
 export async function listFiles(accessToken, extensions = ['docx'], maxResults = 1000) {
-  const mimeTypes = [];
-  const supportedMimes = {
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    pdf: 'application/pdf',
-    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    txt: 'text/plain',
-  };
-  
-  extensions.forEach(ext => {
-    if (supportedMimes[ext]) {
-      mimeTypes.push(supportedMimes[ext]);
-    }
-  });
+  const mimeTypes = getMimeTypes(extensions);
   
   if (mimeTypes.length === 0) {
     return [];
