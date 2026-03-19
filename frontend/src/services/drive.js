@@ -22,9 +22,24 @@ export async function getUserInfo(accessToken) {
   return res.json();
 }
 
-export async function listDocxFiles(accessToken, maxResults = 1000) {
-  const query = "mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' and trashed=false";
-  const fields = 'files(id,name)';
+export async function listFiles(accessToken, extensions = ['docx'], maxResults = 1000) {
+  const mimeTypes = [];
+  const supportedMimes = {
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    pdf: 'application/pdf',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    txt: 'text/plain',
+  };
+  
+  extensions.forEach(ext => {
+    if (supportedMimes[ext]) {
+      mimeTypes.push(supportedMimes[ext]);
+    }
+  });
+  
+  const mimeQuery = mimeTypes.map(m => `mimeType='${m}'`).join(' or ');
+  const query = `(${mimeQuery}) and trashed=false`;
+  const fields = 'files(id,name,mimeType)';
   const url = `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=${maxResults}`;
   const res = await fetchWithAuth(url, accessToken);
   const data = await res.json();
