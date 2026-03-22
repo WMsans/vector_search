@@ -2,9 +2,9 @@ import Dexie from 'dexie';
 
 const db = new Dexie('vectorSearchDB');
 
-db.version(2).stores({
+db.version(3).stores({
   userProfile: 'googleId',
-  documents: '++id, googleId, driveFileId, title, fileType, indexedAt, [googleId+driveFileId]',
+  documents: '++id, googleId, driveFileId, title, fileType, indexedAt, driveModifiedTime, status, [googleId+driveFileId]',
   chunks: '++id, documentId, googleId',
 });
 
