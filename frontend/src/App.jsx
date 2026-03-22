@@ -59,6 +59,7 @@ function Dashboard() {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
   const [indexingPlan, setIndexingPlan] = useState(null);
+  const [selectedTypes, setSelectedTypes] = useState(['docx', 'pdf', 'pptx', 'txt']);
 
   useEffect(() => {
     if (!user?.googleId) return;
@@ -87,6 +88,7 @@ function Dashboard() {
   const handleIndex = async (selectedTypes = ['docx'], mode = 'full') => {
     startIndexing();
     setIndexingPlan(null);
+    setSelectedTypes(selectedTypes);
 
     try {
       if (!isModelLoaded()) {
@@ -325,6 +327,8 @@ function Dashboard() {
         <IndexProgress
           status={indexingStatus}
           onComplete={handleIndexingComplete}
+          onIndex={handleIndex}
+          selectedTypes={selectedTypes}
         />
       )}
 

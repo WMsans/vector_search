@@ -1,13 +1,60 @@
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { CheckCircleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { Spinner } from '../common';
 
-export default function IndexProgress({ status, onComplete }) {
+export default function IndexProgress({ status, onComplete, onIndex, selectedTypes }) {
   const isComplete = status?.phase === 'complete';
+  const isPrompt = status?.phase === 'prompt';
+
+  const handleResume = () => {
+    if (onIndex && selectedTypes) {
+      onIndex(selectedTypes, 'resume');
+    }
+  };
+
+  const handleStartFresh = () => {
+    if (onIndex && selectedTypes) {
+      onIndex(selectedTypes, 'full');
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-        {isComplete ? (
+        {isPrompt ? (
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+              <ArrowPathIcon className="h-8 w-8 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Update Index
+            </h3>
+            <div className="text-gray-600 mb-6 space-y-1">
+              {status?.plan?.resumeFiles?.length > 0 && (
+                <p>{status.plan.resumeFiles.length} file(s) to resume</p>
+              )}
+              {status?.plan?.newFiles?.length > 0 && (
+                <p>{status.plan.newFiles.length} new file(s) found</p>
+              )}
+              {status?.plan?.modifiedFiles?.length > 0 && (
+                <p>{status.plan.modifiedFiles.length} modified file(s)</p>
+              )}
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleResume}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Update Index
+              </button>
+              <button
+                onClick={handleStartFresh}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              >
+                Start Fresh
+              </button>
+            </div>
+          </div>
+        ) : isComplete ? (
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
               <CheckCircleIcon className="h-8 w-8 text-green-600" />
