@@ -33,7 +33,7 @@ export async function listFiles(accessToken, extensions = ['docx'], maxResults =
   
   const mimeQuery = mimeTypes.map(m => `mimeType='${m}'`).join(' or ');
   const query = `(${mimeQuery}) and trashed=false`;
-  const fields = 'files(id,name,mimeType)';
+  const fields = 'files(id,name,mimeType,modifiedTime)';
   const url = `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=${maxResults}`;
   const res = await fetchWithAuth(url, accessToken);
   const data = await res.json();

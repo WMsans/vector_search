@@ -2,9 +2,9 @@ import Dexie from 'dexie';
 
 const db = new Dexie('vectorSearchDB');
 
-db.version(2).stores({
+db.version(3).stores({
   userProfile: 'googleId',
-  documents: '++id, googleId, driveFileId, title, fileType, indexedAt, [googleId+driveFileId]',
+  documents: '++id, googleId, driveFileId, title, fileType, indexedAt, driveModifiedTime, status, [googleId+driveFileId]',
   chunks: '++id, documentId, googleId',
 });
 
@@ -27,6 +27,8 @@ export async function saveDocument(doc) {
     title: doc.title,
     fileType: doc.fileType || 'docx',
     indexedAt: doc.indexedAt,
+    driveModifiedTime: doc.driveModifiedTime || null,
+    status: doc.status || 'pending',
   });
 }
 
@@ -53,6 +55,48 @@ export async function getIndexStatus(googleId) {
   const docs = await db.documents.where('googleId').equals(googleId).sortBy('indexedAt');
   const lastIndexedAt = docs[docs.length - 1]?.indexedAt || null;
   return { indexed: true, documentCount: count, lastIndexedAt };
+}
+
+export async function getIndexedFileIds(googleId) {
+  const docs = await db.documents.where('googleId').equals(googleId).toArray();
+  return new Set(docs.map(d => d.driveFileId));
+}
+
+export async function getPendingDocuments(googleId) {
+  return db.documents
+    .where('googleId').equals(googleId)
+    .filter(d => d.status === 'pending')
+    .toArray();
+}
+
+export async function getModifiedFiles(googleId, driveFiles) {
+  const docs = await db.documents.where('googleId').equals(googleId).toArray();
+  const docMap = new Map(docs.map(d => [d.driveFileId, d]));
+  
+  return driveFiles.filter(file => {
+    const doc = docMap.get(file.id);
+    if (!doc || !doc.driveModifiedTime) return false;
+    return new Date(file.modifiedTime) > new Date(doc.driveModifiedTime);
+  });
+}
+
+export async function updateDocumentStatus(docId, status, driveModifiedTime) {
+  await db.documents.update(docId, { status, driveModifiedTime });
+}
+
+export async function deleteDocumentsByFileIds(googleId, fileIds) {
+  const docs = await db.documents
+    .where('googleId').equals(googleId)
+    .filter(d => fileIds.includes(d.driveFileId))
+    .toArray();
+  const docIds = docs.map(d => d.id);
+  await db.chunks.where('documentId').anyOf(docIds).delete();
+  await db.documents.bulkDelete(docIds);
+}
+
+export async function deleteDocument(docId) {
+  await db.chunks.where('documentId').equals(docId).delete();
+  await db.documents.delete(docId);
 }
 
 export default db;
