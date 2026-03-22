@@ -8,7 +8,7 @@ import { ResultsList, ResultModal } from './components/search';
 import { OnboardingPrompt, IndexProgress } from './components/indexing';
 import { listFiles, downloadFile } from './services/drive';
 import { extractText } from './services/fileExtractors';
-import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments } from './services/storage';
+import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments, getIndexedFileIds, getPendingDocuments, getModifiedFiles, updateDocumentStatus, deleteDocument } from './services/storage';
 import { loadModel, embedChunks, embedQuery, search, isModelLoaded } from './services/embeddings';
 
 function chunkText(text, chunkSize = 50, overlap = 5) {
@@ -22,6 +22,33 @@ function chunkText(text, chunkSize = 50, overlap = 5) {
   return chunks.length > 0 ? chunks : [text];
 }
 
+async function determineIndexingPlan(googleId, driveFiles) {
+  const indexedFileIds = await getIndexedFileIds(googleId);
+  const pendingDocs = await getPendingDocuments(googleId);
+  const modifiedFiles = await getModifiedFiles(googleId, driveFiles);
+  
+  const newFiles = driveFiles.filter(f => !indexedFileIds.has(f.id));
+  
+  const resumeFiles = pendingDocs.map(d => ({
+    id: d.driveFileId,
+    name: d.title,
+    resume: true,
+    docId: d.id,
+    modifiedTime: d.driveModifiedTime,
+  }));
+  
+  return {
+    newFiles,
+    modifiedFiles,
+    resumeFiles,
+    alreadyIndexed: driveFiles.filter(f => 
+      indexedFileIds.has(f.id) && 
+      !pendingDocs.some(p => p.driveFileId === f.id) &&
+      !modifiedFiles.some(m => m.id === f.id)
+    ),
+  };
+}
+
 function Dashboard() {
   const { appState, indexingStatus, startIndexing, updateIndexingStatus, goToReady, goToOnboarding, startSearching, finishSearching } = useAppState();
   const { user, accessToken } = useAuth();
@@ -31,6 +58,7 @@ function Dashboard() {
   const [results, setResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
+  const [indexingPlan, setIndexingPlan] = useState(null);
 
   useEffect(() => {
     if (!user?.googleId) return;
@@ -56,8 +84,9 @@ function Dashboard() {
     return () => { mounted = false; };
   }, [user?.googleId, goToReady, goToOnboarding, addToast]);
 
-  const handleIndex = async (selectedTypes = ['docx']) => {
+  const handleIndex = async (selectedTypes = ['docx'], mode = 'full') => {
     startIndexing();
+    setIndexingPlan(null);
 
     try {
       if (!isModelLoaded()) {
@@ -78,73 +107,20 @@ function Dashboard() {
         return;
       }
 
-      await deleteAllDocuments(user.googleId);
+      const plan = await determineIndexingPlan(user.googleId, files);
+      setIndexingPlan(plan);
 
-      let skipped = 0;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const progressBase = 30 + (i / files.length) * 65;
+      if (mode === 'prompt' && (plan.resumeFiles.length > 0 || plan.newFiles.length > 0 || plan.modifiedFiles.length > 0)) {
         updateIndexingStatus({
-          phase: 'processing',
-          message: `Processing: ${file.name}`,
-          progress: Math.round(progressBase),
-          current: i + 1,
-          total: files.length,
+          phase: 'prompt',
+          message: 'Choose indexing mode',
+          progress: 35,
+          plan,
         });
-
-        try {
-          const arrayBuffer = await downloadFile(accessToken, file.id);
-
-          const text = await extractText(arrayBuffer, file.name);
-          if (!text || text.trim().length === 0) {
-            skipped++;
-            continue;
-          }
-
-          const chunks = chunkText(text);
-
-          const embeddings = await embedChunks(chunks);
-
-          const fileType = file.name.split('.').pop()?.toLowerCase() || 'unknown';
-          const docId = await saveDocument({
-            googleId: user.googleId,
-            driveFileId: file.id,
-            title: file.name,
-            fileType: fileType,
-            indexedAt: new Date(),
-          });
-
-          const chunkRecords = chunks.map((text, idx) => ({
-            documentId: docId,
-            googleId: user.googleId,
-            text: text,
-            embedding: embeddings[idx].buffer,
-          }));
-          await saveChunks(chunkRecords);
-        } catch (err) {
-          console.error(`Failed to process ${file.name}:`, err);
-          if (err.status === 401) {
-            addToast('Session expired. Please sign in again.', 'error');
-            goToOnboarding();
-            return;
-          }
-          skipped++;
-        }
+        return;
       }
 
-      const indexedCount = files.length - skipped;
-      setDocumentCount(indexedCount);
-      setLastIndexed(new Date().toISOString());
-      updateIndexingStatus({
-        phase: 'complete',
-        message: 'Indexing complete!',
-        progress: 100,
-        documentCount: indexedCount,
-      });
-
-      if (skipped > 0) {
-        addToast(`Skipped ${skipped} file(s) that could not be processed.`, 'warning');
-      }
+      await executeIndexing(files, plan, mode);
     } catch (err) {
       console.error('Indexing failed:', err);
       if (err.status === 401) {
@@ -156,9 +132,107 @@ function Dashboard() {
     }
   };
 
+  const executeIndexing = async (files, plan, mode) => {
+    let workQueue = [];
+    
+    if (mode === 'resume') {
+      workQueue = [...plan.resumeFiles, ...plan.newFiles, ...plan.modifiedFiles];
+    } else {
+      await deleteAllDocuments(user.googleId);
+      workQueue = files;
+    }
+
+    if (workQueue.length === 0) {
+      updateIndexingStatus({
+        phase: 'complete',
+        message: 'All files already indexed',
+        progress: 100,
+        documentCount: plan.alreadyIndexed.length,
+      });
+      return;
+    }
+
+    let skipped = 0;
+    for (let i = 0; i < workQueue.length; i++) {
+      const file = workQueue[i];
+      const progressBase = 30 + (i / workQueue.length) * 65;
+      updateIndexingStatus({
+        phase: 'processing',
+        message: `Processing: ${file.name}`,
+        progress: Math.round(progressBase),
+        current: i + 1,
+        total: workQueue.length,
+      });
+
+      try {
+        let docId = file.docId;
+        
+        if (!docId) {
+          docId = await saveDocument({
+            googleId: user.googleId,
+            driveFileId: file.id,
+            title: file.name,
+            fileType: file.name.split('.').pop()?.toLowerCase() || 'unknown',
+            indexedAt: new Date(),
+            driveModifiedTime: file.modifiedTime,
+            status: 'pending',
+          });
+        }
+
+        const arrayBuffer = await downloadFile(accessToken, file.id);
+        const text = await extractText(arrayBuffer, file.name);
+        
+        if (!text || text.trim().length === 0) {
+          await deleteDocument(docId);
+          skipped++;
+          continue;
+        }
+
+        const textChunks = chunkText(text);
+        const embeddings = await embedChunks(textChunks);
+
+        const chunkRecords = textChunks.map((chunkText, idx) => ({
+          documentId: docId,
+          googleId: user.googleId,
+          text: chunkText,
+          embedding: embeddings[idx].buffer,
+        }));
+        await saveChunks(chunkRecords);
+
+        await updateDocumentStatus(docId, 'completed', file.modifiedTime);
+      } catch (err) {
+        console.error(`Failed to process ${file.name}:`, err);
+        if (err.status === 401) {
+          addToast('Session expired. Please sign in again.', 'error');
+          goToOnboarding();
+          return;
+        }
+        skipped++;
+      }
+    }
+
+    const indexedCount = workQueue.length - skipped;
+    const totalCount = mode === 'resume' 
+      ? plan.alreadyIndexed.length + indexedCount 
+      : indexedCount;
+    
+    setDocumentCount(totalCount);
+    setLastIndexed(new Date().toISOString());
+    updateIndexingStatus({
+      phase: 'complete',
+      message: 'Indexing complete!',
+      progress: 100,
+      documentCount: totalCount,
+    });
+
+    if (skipped > 0) {
+      addToast(`Skipped ${skipped} file(s) that could not be processed.`, 'warning');
+    }
+  };
+
   const handleReindex = () => {
     setResults(null);
-    handleIndex(['docx', 'pdf', 'pptx', 'txt']);
+    handleIndex(['docx', 'pdf', 'pptx', 'txt'], 'prompt');
   };
 
   const handleIndexingComplete = () => {
