@@ -21,22 +21,20 @@ export default function OnboardingPrompt({ onIndex }) {
   });
 
   useEffect(() => {
-    loadSavedSelection();
-  }, []);
-
-  const loadSavedSelection = async () => {
-    try {
-      const saved = await getFolderSelection('default');
-      if (saved) {
-        setFolderSelection({
-          selectedFolderIds: saved.selectedFolderIds || [],
-          selectedFileIds: saved.selectedFileIds || [],
-        });
+    (async () => {
+      try {
+        const saved = await getFolderSelection('default');
+        if (saved) {
+          setFolderSelection({
+            selectedFolderIds: saved.selectedFolderIds || [],
+            selectedFileIds: saved.selectedFileIds || [],
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load saved selection:', err);
       }
-    } catch (err) {
-      console.error('Failed to load saved selection:', err);
-    }
-  };
+    })();
+  }, []);
 
   const toggleType = (typeId) => {
     setSelectedTypes(prev => 

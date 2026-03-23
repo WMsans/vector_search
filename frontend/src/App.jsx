@@ -58,7 +58,6 @@ function Dashboard() {
   const [results, setResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
-  const [indexingPlan, setIndexingPlan] = useState(null);
   const [selectedTypes, setSelectedTypes] = useState(['docx', 'pdf', 'pptx', 'txt']);
 
   useEffect(() => {
@@ -87,7 +86,6 @@ function Dashboard() {
 
   const handleIndex = async (selectedTypes = ['docx'], folderSelection = null, mode = 'full') => {
     startIndexing();
-    setIndexingPlan(null);
     setSelectedTypes(selectedTypes);
 
     try {
@@ -119,7 +117,6 @@ function Dashboard() {
       }
 
       const plan = await determineIndexingPlan(user.googleId, files);
-      setIndexingPlan(plan);
 
       if (mode === 'prompt' && (plan.resumeFiles.length > 0 || plan.newFiles.length > 0 || plan.modifiedFiles.length > 0)) {
         updateIndexingStatus({
