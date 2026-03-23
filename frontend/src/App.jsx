@@ -8,7 +8,7 @@ import { ResultsList, ResultModal } from './components/search';
 import { OnboardingPrompt, IndexProgress } from './components/indexing';
 import { listFiles, downloadFile } from './services/drive';
 import { extractText } from './services/fileExtractors';
-import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments, getIndexedFileIds, getPendingDocuments, getModifiedFiles, updateDocumentStatus, deleteDocument } from './services/storage';
+import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments, getIndexedFileIds, getPendingDocuments, getModifiedFiles, updateDocumentStatus, deleteDocument, saveFolderSelection, getFolderSelection } from './services/storage';
 import { loadModel, embedChunks, embedQuery, search, isModelLoaded } from './services/embeddings';
 
 function chunkText(text, chunkSize = 50, overlap = 5) {
@@ -85,7 +85,7 @@ function Dashboard() {
     return () => { mounted = false; };
   }, [user?.googleId, goToReady, goToOnboarding, addToast]);
 
-  const handleIndex = async (selectedTypes = ['docx'], mode = 'full') => {
+  const handleIndex = async (selectedTypes = ['docx'], folderSelection = null, mode = 'full') => {
     startIndexing();
     setIndexingPlan(null);
     setSelectedTypes(selectedTypes);
@@ -101,12 +101,21 @@ function Dashboard() {
       }
 
       updateIndexingStatus({ phase: 'scanning', message: 'Scanning Google Drive...', progress: 30 });
-      const files = await listFiles(accessToken, selectedTypes);
+      
+      const folderIds = folderSelection?.selectedFolderIds?.length > 0 
+        ? folderSelection.selectedFolderIds 
+        : null;
+      
+      const files = await listFiles(accessToken, selectedTypes, folderIds);
 
       if (files.length === 0) {
         updateIndexingStatus({ phase: 'complete', message: 'No files found', progress: 100, documentCount: 0 });
         setDocumentCount(0);
         return;
+      }
+
+      if (folderSelection) {
+        await saveFolderSelection(user.googleId, folderSelection);
       }
 
       const plan = await determineIndexingPlan(user.googleId, files);
@@ -232,9 +241,14 @@ function Dashboard() {
     }
   };
 
-  const handleReindex = () => {
+  const handleReindex = async () => {
     setResults(null);
-    handleIndex(['docx', 'pdf', 'pptx', 'txt'], 'prompt');
+    try {
+      const savedSelection = await getFolderSelection(user.googleId);
+      handleIndex(['docx', 'pdf', 'pptx', 'txt'], savedSelection, 'prompt');
+    } catch {
+      handleIndex(['docx', 'pdf', 'pptx', 'txt'], null, 'prompt');
+    }
   };
 
   const handleIndexingComplete = () => {
