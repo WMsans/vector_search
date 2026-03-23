@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { DEFAULT_THEME } from '../themes/presets';
 
@@ -46,6 +47,7 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     applyThemeToDom(theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -55,10 +57,10 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export function useTheme() {
+export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within ThemeProvider');
   }
   return context;
-}
+};
