@@ -16,6 +16,9 @@ export default function FolderBrowser({
   const [loadingFolders, setLoadingFolders] = useState(new Set());
   const [nextPageTokens, setNextPageTokens] = useState({});
   const [loadingMore, setLoadingMore] = useState(null);
+  const [fileIdToParentFolder, setFileIdToParentFolder] = useState(
+    selection?.fileIdToParentFolder || {}
+  );
 
   const loadRootItems = useCallback(async () => {
     setLoading(true);
@@ -48,10 +51,20 @@ export default function FolderBrowser({
     
     try {
       const data = await listFolderContents(accessToken, folderId, extensions);
+      const files = data.files || [];
       setFolderContents(prev => ({
         ...prev,
-        [folderId]: data.files || [],
+        [folderId]: files,
       }));
+      setFileIdToParentFolder(prev => {
+        const next = { ...prev };
+        files.forEach(file => {
+          if (file.mimeType !== 'application/vnd.google-apps.folder') {
+            next[file.id] = folderId;
+          }
+        });
+        return next;
+      });
       setNextPageTokens(prev => ({ ...prev, [folderId]: data.nextPageToken || null }));
       setExpandedFolders(prev => ({
         ...prev,
@@ -77,10 +90,20 @@ export default function FolderBrowser({
     try {
       if (folderId) {
         const data = await listFolderContents(accessToken, folderId, extensions, pageToken);
+        const newFiles = data.files || [];
         setFolderContents(prev => ({
           ...prev,
-          [folderId]: [...(prev[folderId] || []), ...(data.files || [])],
+          [folderId]: [...(prev[folderId] || []), ...newFiles],
         }));
+        setFileIdToParentFolder(prev => {
+          const next = { ...prev };
+          newFiles.forEach(file => {
+            if (file.mimeType !== 'application/vnd.google-apps.folder') {
+              next[file.id] = folderId;
+            }
+          });
+          return next;
+        });
         setNextPageTokens(prev => ({ ...prev, [folderId]: data.nextPageToken || null }));
       } else {
         const data = await listRootItems(accessToken, extensions, pageToken);
@@ -103,12 +126,12 @@ export default function FolderBrowser({
 
   const isItemPartial = (item) => {
     if (item.mimeType !== 'application/vnd.google-apps.folder') return false;
+    if (selection.selectedFolderIds.includes(item.id)) return false;
     
-    const contents = folderContents[item.id] || [];
-    if (contents.length === 0) return false;
-    
-    const selectedCount = contents.filter(child => isItemSelected(child)).length;
-    return selectedCount > 0 && selectedCount < contents.length;
+    const hasSelectedFiles = selection.selectedFileIds.some(
+      fileId => fileIdToParentFolder[fileId] === item.id
+    );
+    return hasSelectedFiles;
   };
 
   const handleToggle = useCallback((item) => {
@@ -122,32 +145,44 @@ export default function FolderBrowser({
         .map(child => child.id);
       
       if (isCurrentlySelected) {
+        const newFileIdToParentFolder = { ...fileIdToParentFolder };
+        childFileIds.forEach(id => delete newFileIdToParentFolder[id]);
         onSelectionChange({
           selectedFolderIds: selection.selectedFolderIds.filter(id => id !== item.id),
           selectedFileIds: selection.selectedFileIds.filter(id => !childFileIds.includes(id)),
+          fileIdToParentFolder: newFileIdToParentFolder,
         });
       } else {
+        const newFileIdToParentFolder = { ...fileIdToParentFolder };
+        childFileIds.forEach(id => {
+          newFileIdToParentFolder[id] = item.id;
+        });
         const newFileIds = [...new Set([...selection.selectedFileIds, ...childFileIds])];
         onSelectionChange({
           selectedFolderIds: [...selection.selectedFolderIds, item.id],
           selectedFileIds: newFileIds,
+          fileIdToParentFolder: newFileIdToParentFolder,
         });
       }
     } else {
       const currentList = selection.selectedFileIds;
       if (currentList.includes(item.id)) {
+        const newFileIdToParentFolder = { ...fileIdToParentFolder };
+        delete newFileIdToParentFolder[item.id];
         onSelectionChange({
           ...selection,
           selectedFileIds: currentList.filter(id => id !== item.id),
+          fileIdToParentFolder: newFileIdToParentFolder,
         });
       } else {
         onSelectionChange({
           ...selection,
           selectedFileIds: [...currentList, item.id],
+          fileIdToParentFolder,
         });
       }
     }
-  }, [selection, onSelectionChange, folderContents]);
+  }, [selection, onSelectionChange, folderContents, fileIdToParentFolder]);
 
   const handleSelectAll = () => {
     const allFolderIds = rootItems
@@ -160,6 +195,7 @@ export default function FolderBrowser({
     onSelectionChange({
       selectedFolderIds: allFolderIds,
       selectedFileIds: allFileIds,
+      fileIdToParentFolder,
     });
   };
 
@@ -167,6 +203,7 @@ export default function FolderBrowser({
     onSelectionChange({
       selectedFolderIds: [],
       selectedFileIds: [],
+      fileIdToParentFolder: {},
     });
   };
 
