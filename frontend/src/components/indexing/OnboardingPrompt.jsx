@@ -19,6 +19,7 @@ export default function OnboardingPrompt({ onIndex }) {
     selectedFolderIds: [],
     selectedFileIds: [],
   });
+  const [isLoadingSelection, setIsLoadingSelection] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -33,6 +34,8 @@ export default function OnboardingPrompt({ onIndex }) {
         }
       } catch (err) {
         console.error('Failed to load saved selection:', err);
+      } finally {
+        setIsLoadingSelection(false);
       }
     })();
   }, [user?.googleId]);
@@ -88,12 +91,19 @@ export default function OnboardingPrompt({ onIndex }) {
 
         {step === 1 && (
           <div className="text-left mb-6">
-            <FolderBrowser
-              accessToken={accessToken}
-              extensions={selectedTypes}
-              selection={folderSelection}
-              onSelectionChange={handleFolderSelectionChange}
-            />
+            {isLoadingSelection ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: 'var(--theme-accent)' }} />
+                <span className="ml-2 text-gray-600">Loading selection...</span>
+              </div>
+            ) : (
+              <FolderBrowser
+                accessToken={accessToken}
+                extensions={selectedTypes}
+                selection={folderSelection}
+                onSelectionChange={handleFolderSelectionChange}
+              />
+            )}
           </div>
         )}
 
