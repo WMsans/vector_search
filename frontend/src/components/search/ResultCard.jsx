@@ -31,15 +31,17 @@ export default function ResultCard({ result, rank, onClick }) {
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15, color: 'var(--theme-accent)' }}>
-            {rank}
+          <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold relative" style={{ color: 'var(--theme-accent)' }}>
+            <span className="absolute inset-0 rounded-full" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}></span>
+            <span className="relative">{rank}</span>
           </span>
           <h3 className="text-lg font-semibold truncate" style={{ color: 'var(--theme-text)' }}>
             {result.title}
           </h3>
         </div>
-        <span className="flex-shrink-0 ml-2 px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15, color: 'var(--theme-accent)' }}>
-          {result.score}%
+        <span className="flex-shrink-0 ml-2 px-2 py-1 text-xs font-medium rounded-full relative" style={{ color: 'var(--theme-accent)' }}>
+          <span className="absolute inset-0 rounded-full" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}></span>
+          <span className="relative">{result.score}%</span>
         </span>
       </div>
 

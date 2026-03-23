@@ -128,20 +128,24 @@ export default function OnboardingPrompt({ onIndex }) {
               {FILE_TYPES.map(type => (
                 <label
                   key={type.id}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border-2`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border-2 relative`}
                   style={{
-                    backgroundColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'rgba(128,128,128,0.1)',
                     borderColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'transparent',
-                    opacity: selectedTypes.includes(type.id) ? 0.15 : 1,
                   }}
                 >
+                  {selectedTypes.includes(type.id) && (
+                    <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }} />
+                  )}
+                  {!selectedTypes.includes(type.id) && (
+                    <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: 'rgba(128,128,128,0.1)' }} />
+                  )}
                   <input
                     type="checkbox"
                     checked={selectedTypes.includes(type.id)}
                     onChange={() => toggleType(type.id)}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
+                  <span className="relative text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
                     {type.label}
                   </span>
                 </label>
