@@ -14,12 +14,15 @@ export default function FolderBrowser({
   const [expandedFolders, setExpandedFolders] = useState({});
   const [folderContents, setFolderContents] = useState({});
   const [loadingFolders, setLoadingFolders] = useState(new Set());
+  const [nextPageTokens, setNextPageTokens] = useState({});
+  const [loadingMore, setLoadingMore] = useState(null);
 
   const loadRootItems = useCallback(async () => {
     setLoading(true);
     try {
       const data = await listRootItems(accessToken, extensions);
       setRootItems(data.files || []);
+      setNextPageTokens(prev => ({ ...prev, root: data.nextPageToken || null }));
     } catch (err) {
       console.error('Failed to load root items:', err);
     } finally {
@@ -49,6 +52,7 @@ export default function FolderBrowser({
         ...prev,
         [folderId]: data.files || [],
       }));
+      setNextPageTokens(prev => ({ ...prev, [folderId]: data.nextPageToken || null }));
       setExpandedFolders(prev => ({
         ...prev,
         [folderId]: true,
@@ -63,6 +67,32 @@ export default function FolderBrowser({
       });
     }
   }, [accessToken, extensions, expandedFolders]);
+
+  const handleLoadMore = useCallback(async (folderId = null) => {
+    const key = folderId || 'root';
+    const pageToken = nextPageTokens[key];
+    if (!pageToken || loadingMore === key) return;
+
+    setLoadingMore(key);
+    try {
+      if (folderId) {
+        const data = await listFolderContents(accessToken, folderId, extensions, pageToken);
+        setFolderContents(prev => ({
+          ...prev,
+          [folderId]: [...(prev[folderId] || []), ...(data.files || [])],
+        }));
+        setNextPageTokens(prev => ({ ...prev, [folderId]: data.nextPageToken || null }));
+      } else {
+        const data = await listRootItems(accessToken, extensions, pageToken);
+        setRootItems(prev => [...prev, ...(data.files || [])]);
+        setNextPageTokens(prev => ({ ...prev, root: data.nextPageToken || null }));
+      }
+    } catch (err) {
+      console.error('Failed to load more items:', err);
+    } finally {
+      setLoadingMore(null);
+    }
+  }, [accessToken, extensions, nextPageTokens, loadingMore]);
 
   const isItemSelected = (item) => {
     if (item.mimeType === 'application/vnd.google-apps.folder') {
@@ -140,8 +170,12 @@ export default function FolderBrowser({
     });
   };
 
-  const renderItems = (items, level = 0) => {
-    return items.map(item => (
+  const renderItems = (items, level = 0, folderId = null) => {
+    const key = folderId || 'root';
+    const hasMore = !!nextPageTokens[key];
+    const isLoadingMore = loadingMore === key;
+
+    const result = items.map(item => (
       <FolderTreeItem
         key={item.id}
         item={item}
@@ -154,10 +188,33 @@ export default function FolderBrowser({
         level={level}
       >
         {expandedFolders[item.id] && folderContents[item.id] && (
-          renderItems(folderContents[item.id], level + 1)
+          renderItems(folderContents[item.id], level + 1, item.id)
         )}
       </FolderTreeItem>
     ));
+
+    if (hasMore) {
+      result.push(
+        <button
+          key={`load-more-${key}`}
+          onClick={() => handleLoadMore(folderId)}
+          disabled={isLoadingMore}
+          className="w-full py-2 text-sm hover:opacity-80 flex items-center justify-center gap-2"
+          style={{ color: 'var(--theme-accent)' }}
+        >
+          {isLoadingMore ? (
+            <>
+              <Spinner size="sm" />
+              Loading...
+            </>
+          ) : (
+            'Load more'
+          )}
+        </button>
+      );
+    }
+
+    return result;
   };
 
   if (loading) {
