@@ -7,13 +7,13 @@ export default function IndexProgress({ status, onComplete, onIndex, selectedTyp
 
   const handleResume = () => {
     if (onIndex && selectedTypes) {
-      onIndex(selectedTypes, 'resume');
+      onIndex(selectedTypes, null, 'resume');
     }
   };
 
   const handleStartFresh = () => {
     if (onIndex && selectedTypes) {
-      onIndex(selectedTypes, 'full');
+      onIndex(selectedTypes, null, 'full');
     }
   };
 

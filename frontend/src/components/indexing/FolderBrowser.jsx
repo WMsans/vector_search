@@ -83,21 +83,41 @@ export default function FolderBrowser({
 
   const handleToggle = useCallback((item) => {
     const isFolder = item.mimeType === 'application/vnd.google-apps.folder';
-    const key = isFolder ? 'selectedFolderIds' : 'selectedFileIds';
-    const currentList = selection[key];
     
-    if (currentList.includes(item.id)) {
-      onSelectionChange({
-        ...selection,
-        [key]: currentList.filter(id => id !== item.id),
-      });
+    if (isFolder) {
+      const isCurrentlySelected = selection.selectedFolderIds.includes(item.id);
+      const contents = folderContents[item.id] || [];
+      const childFileIds = contents
+        .filter(child => child.mimeType !== 'application/vnd.google-apps.folder')
+        .map(child => child.id);
+      
+      if (isCurrentlySelected) {
+        onSelectionChange({
+          selectedFolderIds: selection.selectedFolderIds.filter(id => id !== item.id),
+          selectedFileIds: selection.selectedFileIds.filter(id => !childFileIds.includes(id)),
+        });
+      } else {
+        const newFileIds = [...new Set([...selection.selectedFileIds, ...childFileIds])];
+        onSelectionChange({
+          selectedFolderIds: [...selection.selectedFolderIds, item.id],
+          selectedFileIds: newFileIds,
+        });
+      }
     } else {
-      onSelectionChange({
-        ...selection,
-        [key]: [...currentList, item.id],
-      });
+      const currentList = selection.selectedFileIds;
+      if (currentList.includes(item.id)) {
+        onSelectionChange({
+          ...selection,
+          selectedFileIds: currentList.filter(id => id !== item.id),
+        });
+      } else {
+        onSelectionChange({
+          ...selection,
+          selectedFileIds: [...currentList, item.id],
+        });
+      }
     }
-  }, [selection, onSelectionChange]);
+  }, [selection, onSelectionChange, folderContents]);
 
   const handleSelectAll = () => {
     const allFolderIds = rootItems

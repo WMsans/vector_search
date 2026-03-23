@@ -12,7 +12,7 @@ const FILE_TYPES = [
 ];
 
 export default function OnboardingPrompt({ onIndex }) {
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [step, setStep] = useState(1);
   const [selectedTypes, setSelectedTypes] = useState(['docx', 'pdf', 'pptx', 'txt']);
   const [folderSelection, setFolderSelection] = useState({
@@ -22,8 +22,9 @@ export default function OnboardingPrompt({ onIndex }) {
 
   useEffect(() => {
     (async () => {
+      if (!user?.googleId) return;
       try {
-        const saved = await getFolderSelection('default');
+        const saved = await getFolderSelection(user.googleId);
         if (saved) {
           setFolderSelection({
             selectedFolderIds: saved.selectedFolderIds || [],
@@ -34,7 +35,7 @@ export default function OnboardingPrompt({ onIndex }) {
         console.error('Failed to load saved selection:', err);
       }
     })();
-  }, []);
+  }, [user?.googleId]);
 
   const toggleType = (typeId) => {
     setSelectedTypes(prev => 

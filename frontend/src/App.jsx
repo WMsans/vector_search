@@ -89,6 +89,10 @@ function Dashboard() {
     setSelectedTypes(selectedTypes);
 
     try {
+      if (!folderSelection) {
+        folderSelection = await getFolderSelection(user.googleId);
+      }
+
       if (!isModelLoaded()) {
         updateIndexingStatus({ phase: 'loading', message: 'Loading AI model...', progress: 0 });
         await loadModel((progress) => {
@@ -103,8 +107,36 @@ function Dashboard() {
       const folderIds = folderSelection?.selectedFolderIds?.length > 0 
         ? folderSelection.selectedFolderIds 
         : null;
+      const fileIds = folderSelection?.selectedFileIds?.length > 0 
+        ? folderSelection.selectedFileIds 
+        : null;
       
-      const files = await listFiles(accessToken, selectedTypes, folderIds);
+      let files = [];
+      
+      if (folderIds) {
+        files = await listFiles(accessToken, selectedTypes, folderIds);
+      }
+      
+      if (fileIds && fileIds.length > 0) {
+        const fileDetails = await Promise.all(
+          fileIds.map(async (id) => {
+            try {
+              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=id,name,mimeType,modifiedTime`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (res.ok) return res.json();
+            } catch (e) {
+              console.warn(`Failed to fetch file ${id}:`, e.message);
+            }
+            return null;
+          })
+        );
+        const validFiles = fileDetails.filter(f => f && f.id);
+        const existingIDs = new Set(files.map(f => f.id));
+        for (const f of validFiles) {
+          if (!existingIDs.has(f.id)) files.push(f);
+        }
+      }
 
       if (files.length === 0) {
         updateIndexingStatus({ phase: 'complete', message: 'No files found', progress: 100, documentCount: 0 });
