@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
           sessionStorage.setItem('access_token', token);
           try {
             const userInfo = await getUserInfo(token);
-            setUser({ email: userInfo.email, googleId: userInfo.id });
+            setUser({ email: userInfo.email, googleId: userInfo.id, picture: userInfo.picture });
           } catch (err) {
             console.error('Failed to get user info:', err);
           }
@@ -53,7 +53,7 @@ export function AuthProvider({ children }) {
       getUserInfo(storedToken)
         .then((userInfo) => {
           setAccessToken(storedToken);
-          setUser({ email: userInfo.email, googleId: userInfo.id });
+          setUser({ email: userInfo.email, googleId: userInfo.id, picture: userInfo.picture });
         })
         .catch(() => {
           sessionStorage.removeItem('access_token');
