@@ -164,7 +164,7 @@ export default function FolderBrowser({
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner />
-        <span className="ml-2 text-gray-600">Loading your Drive...</span>
+        <span className="ml-2" style={{ color: 'var(--theme-text)', opacity: 0.7 }}>Loading your Drive...</span>
       </div>
     );
   }
@@ -174,34 +174,36 @@ export default function FolderBrowser({
   return (
     <div className="flex flex-col h-full">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Select folders to index</h3>
-        <p className="text-sm text-gray-500">Choose which folders and files to include in your search index</p>
+        <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>Select folders to index</h3>
+        <p className="text-sm" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>Choose which folders and files to include in your search index</p>
       </div>
       
       <div className="flex gap-2 mb-3">
         <button
           onClick={handleSelectAll}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm hover:opacity-80"
+          style={{ color: 'var(--theme-accent)' }}
         >
           Select all
         </button>
-        <span className="text-gray-300">|</span>
+        <span style={{ color: 'var(--theme-text)', opacity: 0.3 }}>|</span>
         <button
           onClick={handleDeselectAll}
-          className="text-sm text-blue-600 hover:text-blue-700"
+          className="text-sm hover:opacity-80"
+          style={{ color: 'var(--theme-accent)' }}
         >
           Deselect all
         </button>
         {totalSelected > 0 && (
-          <span className="ml-auto text-sm text-gray-500">
+          <span className="ml-auto text-sm" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>
             {totalSelected} selected
           </span>
         )}
       </div>
       
-      <div className="flex-1 overflow-auto border border-gray-200 rounded-lg bg-white max-h-80">
+      <div className="flex-1 overflow-auto rounded-lg max-h-80" style={{ border: '1px solid rgba(128,128,128,0.2)', backgroundColor: 'var(--theme-bg-2)' }}>
         {rootItems.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
+          <div className="p-4 text-center" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>
             No folders or files found
           </div>
         ) : (
