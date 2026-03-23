@@ -316,6 +316,7 @@ function Dashboard() {
         documentCount={documentCount}
         lastIndexed={lastIndexed}
         onReindex={handleReindex}
+        onEditFolders={goToOnboarding}
       >
         {appState === APP_STATES.ONBOARDING && (
           <OnboardingPrompt onIndex={handleIndex} />
