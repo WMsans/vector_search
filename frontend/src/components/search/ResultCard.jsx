@@ -23,28 +23,32 @@ export default function ResultCard({ result, rank, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer"
+      className="rounded-lg border p-6 hover:shadow-md transition-all cursor-pointer"
+      style={{ 
+        backgroundColor: 'var(--theme-bg-2)', 
+        borderColor: 'rgba(128,128,128,0.2)',
+      }}
     >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">
+          <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15, color: 'var(--theme-accent)' }}>
             {rank}
           </span>
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
+          <h3 className="text-lg font-semibold truncate" style={{ color: 'var(--theme-text)' }}>
             {result.title}
           </h3>
         </div>
-        <span className="flex-shrink-0 ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+        <span className="flex-shrink-0 ml-2 px-2 py-1 text-xs font-medium rounded-full" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15, color: 'var(--theme-accent)' }}>
           {result.score}%
         </span>
       </div>
 
-      <p className="text-gray-700 mb-4 line-clamp-3">
+      <p className="mb-4 line-clamp-3" style={{ color: 'var(--theme-text)', opacity: 0.8 }}>
         {result.text}
       </p>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4 text-sm text-gray-500">
+        <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>
           <div className="flex items-center gap-1">
             <DocumentTextIcon className="h-4 w-4" />
             <span>Document chunk</span>
@@ -56,7 +60,8 @@ export default function ResultCard({ result, rank, onClick }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1 text-sm transition-colors"
+            style={{ color: 'var(--theme-text)', opacity: 0.6 }}
           >
             <ClipboardDocumentIcon className="h-4 w-4" />
             {copied ? 'Copied!' : 'Copy'}
@@ -64,7 +69,8 @@ export default function ResultCard({ result, rank, onClick }) {
           {result.drive_file_id && (
             <button
               onClick={handleOpen}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              className="flex items-center gap-1 text-sm transition-colors"
+              style={{ color: 'var(--theme-text)', opacity: 0.6 }}
               title="Open in Google Docs"
             >
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />

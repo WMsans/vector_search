@@ -1,4 +1,4 @@
-export default function Spinner({ size = 'md', className = '' }) {
+export default function Spinner({ size = 'md', className = '', style = {} }) {
   const sizes = {
     sm: 'h-4 w-4',
     md: 'h-6 w-6',
@@ -9,6 +9,7 @@ export default function Spinner({ size = 'md', className = '' }) {
   return (
     <svg
       className={`animate-spin ${sizes[size]} ${className}`}
+      style={style}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

@@ -14,27 +14,32 @@ export default function TopBar({ onSearch, isSearching = false, disabled = false
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="px-6 py-4 border-b" style={{ backgroundColor: 'var(--theme-bg-2)', borderColor: 'rgba(128,128,128,0.2)' }}>
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
         <div className="flex gap-4 items-center">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" style={{ color: 'var(--theme-text)', opacity: 0.4 }} />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search your documents..."
               disabled={disabled || isSearching}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none disabled:cursor-not-allowed"
+              style={{
+                backgroundColor: 'var(--theme-bg-1)',
+                borderColor: 'rgba(128,128,128,0.3)',
+                color: 'var(--theme-text)',
+              }}
             />
             {isSearching && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <Spinner size="sm" className="text-blue-600" />
+                <Spinner size="sm" style={{ color: 'var(--theme-accent)' }} />
               </div>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">
+            <label className="text-sm" style={{ color: 'var(--theme-text)', opacity: 0.7 }}>
               Results:
             </label>
             <input
@@ -45,13 +50,18 @@ export default function TopBar({ onSearch, isSearching = false, disabled = false
               onChange={(e) => setTopK(Number(e.target.value))}
               disabled={disabled || isSearching}
               className="w-24 disabled:opacity-50"
+              style={{ accentColor: 'var(--theme-accent)' }}
             />
-            <span className="text-sm font-medium text-gray-900 w-6">{topK}</span>
+            <span className="text-sm font-medium w-6" style={{ color: 'var(--theme-text)' }}>{topK}</span>
           </div>
           <button
             type="submit"
             disabled={!query.trim() || isSearching || disabled}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-white rounded-lg font-medium disabled:cursor-not-allowed transition-colors"
+            style={{
+              backgroundColor: 'var(--theme-accent)',
+              opacity: (!query.trim() || isSearching || disabled) ? 0.5 : 1,
+            }}
           >
             Search
           </button>

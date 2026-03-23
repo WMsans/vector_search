@@ -6,6 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vector Search</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('vector-search-theme');
+          if (stored) {
+            var theme = JSON.parse(stored);
+            if (theme.bg1 && theme.bg2 && theme.text && theme.accent) {
+              var root = document.documentElement;
+              root.style.setProperty('--theme-bg-1', theme.bg1);
+              root.style.setProperty('--theme-bg-2', theme.bg2);
+              root.style.setProperty('--theme-text', theme.text);
+              root.style.setProperty('--theme-accent', theme.accent);
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

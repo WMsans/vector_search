@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from './hooks/useAuth';
 import useAppState, { APP_STATES } from './hooks/useAppState';
 import { ToastProvider, useToast } from './components/common';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Layout, TopBar } from './components/layout';
 import Login from './components/Login';
 import { ResultsList, ResultModal } from './components/search';
@@ -406,9 +407,11 @@ function App() {
 export default function AppWithProvider() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

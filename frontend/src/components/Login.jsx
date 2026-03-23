@@ -5,16 +5,16 @@ export default function Login() {
   const { login } = useAuth();
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--theme-bg-1)' }}>
+      <div className="rounded-2xl shadow-xl p-8 max-w-md w-full" style={{ backgroundColor: 'var(--theme-bg-2)' }}>
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <DocumentTextIcon className="h-8 w-8 text-blue-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}>
+            <DocumentTextIcon className="h-8 w-8" style={{ color: 'var(--theme-accent)' }} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--theme-text)' }}>
             Vector Search
           </h1>
-          <p className="text-gray-600">
+          <p style={{ color: 'var(--theme-text)', opacity: 0.7 }}>
             Search your Google Drive documents with semantic search
           </p>
         </div>
@@ -22,7 +22,8 @@ export default function Login() {
         <div className="space-y-4">
           <button
             onClick={login}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 border rounded-lg transition-colors"
+            style={{ borderColor: 'rgba(128,128,128,0.3)', backgroundColor: 'var(--theme-bg-1)' }}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24">
               <path
@@ -42,11 +43,11 @@ export default function Login() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span className="text-gray-700 font-medium">Sign in with Google</span>
+            <span className="font-medium" style={{ color: 'var(--theme-text)' }}>Sign in with Google</span>
           </button>
         </div>
 
-        <p className="text-xs text-gray-500 text-center mt-6">
+        <p className="text-xs text-center mt-6" style={{ color: 'var(--theme-text)', opacity: 0.5 }}>
           Your documents stay private, locally. We only read files you choose to index.
         </p>
       </div>

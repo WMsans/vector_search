@@ -3,3 +3,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --theme-bg-1: #eff1f5;
+  --theme-bg-2: #ffffff;
+  --theme-text: #4c4f69;
+  --theme-accent: #8839ef;
+}
