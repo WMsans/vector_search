@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Badge } from '../common';
-import { DocumentTextIcon, ArrowPathIcon, FolderIcon } from '@heroicons/react/24/outline';
+import { SettingsModal } from '../settings';
+import { DocumentTextIcon, ArrowPathIcon, FolderIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 
 export default function Sidebar({ appState, documentCount, lastIndexed, onReindex, onEditFolders }) {
   const { user, logout } = useAuth();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const getStatusBadge = () => {
     if (appState === 'indexing') {
@@ -83,13 +86,24 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
             <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors text-left"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={logout}
+            className="flex-1 text-sm text-gray-600 hover:text-gray-900 transition-colors text-left"
+          >
+            Sign out
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="p-2 rounded-lg hover:bg-black/5 transition-colors"
+            style={{ color: 'var(--theme-text)' }}
+            aria-label="Open settings"
+          >
+            <Cog6ToothIcon className="w-5 h-5" />
+          </button>
+        </div>
       </div>
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </aside>
   );
 }
