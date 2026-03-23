@@ -66,20 +66,20 @@ export default function OnboardingPrompt({ onIndex }) {
   return (
     <div className="flex items-center justify-center h-full p-8">
       <div className="max-w-lg w-full text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-6">
-          <CloudArrowUpIcon className="h-10 w-10 text-blue-600" />
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}>
+          <CloudArrowUpIcon className="h-10 w-10" style={{ color: 'var(--theme-accent)' }} />
         </div>
         
         <div className="flex items-center justify-center gap-3 mb-6">
-          <div className={`flex items-center ${step >= 1 ? 'text-blue-600' : 'text-gray-400'}`}>
-            <span className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+          <div className="flex items-center" style={{ color: step >= 1 ? 'var(--theme-accent)' : 'var(--theme-text)', opacity: step >= 1 ? 1 : 0.4 }}>
+            <span className="w-7 h-7 rounded-full text-sm flex items-center justify-center text-white" style={{ backgroundColor: step >= 1 ? 'var(--theme-accent)' : 'rgba(128,128,128,0.3)' }}>
               1
             </span>
             <span className="ml-2 text-sm font-medium">Select Folders</span>
           </div>
-          <div className="w-8 h-0.5 bg-gray-200" />
-          <div className={`flex items-center ${step >= 2 ? 'text-blue-600' : 'text-gray-400'}`}>
-            <span className={`w-7 h-7 rounded-full text-sm flex items-center justify-center ${step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}>
+          <div className="w-8 h-0.5" style={{ backgroundColor: 'rgba(128,128,128,0.3)' }} />
+          <div className="flex items-center" style={{ color: step >= 2 ? 'var(--theme-accent)' : 'var(--theme-text)', opacity: step >= 2 ? 1 : 0.4 }}>
+            <span className="w-7 h-7 rounded-full text-sm flex items-center justify-center text-white" style={{ backgroundColor: step >= 2 ? 'var(--theme-accent)' : 'rgba(128,128,128,0.3)' }}>
               2
             </span>
             <span className="ml-2 text-sm font-medium">Select File Types</span>
@@ -101,7 +101,8 @@ export default function OnboardingPrompt({ onIndex }) {
           <button
             onClick={handleContinue}
             disabled={!hasSelection}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ backgroundColor: 'var(--theme-accent)' }}
           >
             Continue
           </button>
@@ -109,7 +110,7 @@ export default function OnboardingPrompt({ onIndex }) {
 
         {step === 2 && (
           <>
-            <p className="text-gray-600 mb-6">
+            <p className="mb-6" style={{ color: 'var(--theme-text)', opacity: 0.7 }}>
               Select which file types to index from selected folders:
             </p>
 
@@ -117,11 +118,12 @@ export default function OnboardingPrompt({ onIndex }) {
               {FILE_TYPES.map(type => (
                 <label
                   key={type.id}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors ${
-                    selectedTypes.includes(type.id)
-                      ? 'bg-blue-100 border-2 border-blue-500'
-                      : 'bg-gray-100 border-2 border-transparent hover:bg-gray-200'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border-2`}
+                  style={{
+                    backgroundColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'rgba(128,128,128,0.1)',
+                    borderColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'transparent',
+                    opacity: selectedTypes.includes(type.id) ? 0.15 : 1,
+                  }}
                 >
                   <input
                     type="checkbox"
@@ -129,9 +131,7 @@ export default function OnboardingPrompt({ onIndex }) {
                     onChange={() => toggleType(type.id)}
                     className="sr-only"
                   />
-                  <span className={`text-sm font-medium ${
-                    selectedTypes.includes(type.id) ? 'text-blue-700' : 'text-gray-600'
-                  }`}>
+                  <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
                     {type.label}
                   </span>
                 </label>
@@ -141,7 +141,8 @@ export default function OnboardingPrompt({ onIndex }) {
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={handleBack}
-                className="px-4 py-3 text-gray-600 hover:text-gray-800 font-medium flex items-center gap-1"
+                className="px-4 py-3 font-medium flex items-center gap-1"
+                style={{ color: 'var(--theme-text)', opacity: 0.7 }}
               >
                 <ChevronLeftIcon className="w-4 h-4" />
                 Back
@@ -149,7 +150,8 @@ export default function OnboardingPrompt({ onIndex }) {
               <button
                 onClick={handleIndex}
                 disabled={selectedTypes.length === 0}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: 'var(--theme-accent)' }}
               >
                 Index Selected Items
               </button>
@@ -157,7 +159,7 @@ export default function OnboardingPrompt({ onIndex }) {
           </>
         )}
 
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="text-xs mt-4" style={{ color: 'var(--theme-text)', opacity: 0.5 }}>
           {step === 1 
             ? 'Select the folders and files you want to make searchable'
             : 'This may take a few minutes depending on the number of documents'
