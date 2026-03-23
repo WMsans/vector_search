@@ -10,3 +10,26 @@
   --theme-text: #4c4f69;
   --theme-accent: #8839ef;
 }
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--theme-text) 30%, transparent);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--theme-text) 50%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-text) transparent;
+}

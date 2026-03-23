@@ -52,7 +52,7 @@ export async function listFolderContents(accessToken, folderId, extensions = ['d
   return res.json();
 }
 
-export async function listFiles(accessToken, extensions = ['docx'], folderIds = null, maxResults = 1000) {
+export async function listFiles(accessToken, extensions = ['docx'], folderIds = null) {
   const mimeTypes = getMimeTypes(extensions);
   
   if (mimeTypes.length === 0) {
@@ -67,11 +67,24 @@ export async function listFiles(accessToken, extensions = ['docx'], folderIds = 
     query += ` and (${folderQuery})`;
   }
   
-  const fields = 'files(id,name,mimeType,modifiedTime)';
-  const url = `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=${maxResults}`;
-  const res = await fetchWithAuth(url, accessToken);
-  const data = await res.json();
-  return data.files || [];
+  const fields = 'files(id,name,mimeType,modifiedTime),nextPageToken';
+  const allFiles = [];
+  let pageToken = null;
+  
+  do {
+    let url = `${DRIVE_API}/files?q=${encodeURIComponent(query)}&fields=${encodeURIComponent(fields)}&pageSize=500&orderBy=name`;
+    if (pageToken) {
+      url += `&pageToken=${pageToken}`;
+    }
+    const res = await fetchWithAuth(url, accessToken);
+    const data = await res.json();
+    if (data.files) {
+      allFiles.push(...data.files);
+    }
+    pageToken = data.nextPageToken || null;
+  } while (pageToken);
+  
+  return allFiles;
 }
 
 export async function downloadFile(accessToken, fileId) {

@@ -19,6 +19,7 @@ export default function OnboardingPrompt({ onIndex }) {
     selectedFolderIds: [],
     selectedFileIds: [],
   });
+  const [isLoadingSelection, setIsLoadingSelection] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -33,6 +34,8 @@ export default function OnboardingPrompt({ onIndex }) {
         }
       } catch (err) {
         console.error('Failed to load saved selection:', err);
+      } finally {
+        setIsLoadingSelection(false);
       }
     })();
   }, [user?.googleId]);
@@ -88,12 +91,19 @@ export default function OnboardingPrompt({ onIndex }) {
 
         {step === 1 && (
           <div className="text-left mb-6">
-            <FolderBrowser
-              accessToken={accessToken}
-              extensions={selectedTypes}
-              selection={folderSelection}
-              onSelectionChange={handleFolderSelectionChange}
-            />
+            {isLoadingSelection ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: 'var(--theme-accent)' }} />
+                <span className="ml-2 text-gray-600">Loading selection...</span>
+              </div>
+            ) : (
+              <FolderBrowser
+                accessToken={accessToken}
+                extensions={selectedTypes}
+                selection={folderSelection}
+                onSelectionChange={handleFolderSelectionChange}
+              />
+            )}
           </div>
         )}
 
@@ -118,20 +128,24 @@ export default function OnboardingPrompt({ onIndex }) {
               {FILE_TYPES.map(type => (
                 <label
                   key={type.id}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border-2`}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors border-2 relative`}
                   style={{
-                    backgroundColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'rgba(128,128,128,0.1)',
                     borderColor: selectedTypes.includes(type.id) ? 'var(--theme-accent)' : 'transparent',
-                    opacity: selectedTypes.includes(type.id) ? 0.15 : 1,
                   }}
                 >
+                  {selectedTypes.includes(type.id) && (
+                    <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }} />
+                  )}
+                  {!selectedTypes.includes(type.id) && (
+                    <span className="absolute inset-0 rounded-lg" style={{ backgroundColor: 'rgba(128,128,128,0.1)' }} />
+                  )}
                   <input
                     type="checkbox"
                     checked={selectedTypes.includes(type.id)}
                     onChange={() => toggleType(type.id)}
                     className="sr-only"
                   />
-                  <span className="text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
+                  <span className="relative text-sm font-medium" style={{ color: 'var(--theme-text)' }}>
                     {type.label}
                   </span>
                 </label>
