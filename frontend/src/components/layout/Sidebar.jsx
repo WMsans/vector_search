@@ -79,11 +79,20 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
 
       <div className="p-6 border-t" style={{ borderColor: 'rgba(128,128,128,0.2)' }}>
         <div className="flex items-center gap-3 mb-3">
-          <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}>
-            <span className="text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
-              {user?.email?.[0]?.toUpperCase()}
-            </span>
-          </div>
+          {user?.picture ? (
+            <img
+              src={user.picture}
+              alt="Profile"
+              className="h-8 w-8 rounded-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}>
+              <span className="text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
+                {user?.email?.[0]?.toUpperCase()}
+              </span>
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate" style={{ color: 'var(--theme-text)' }}>{user?.email}</p>
           </div>
