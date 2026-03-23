@@ -34,22 +34,22 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col">
-      <div className="p-6 border-b border-gray-200">
+    <aside className="w-64 border-r h-screen flex flex-col" style={{ backgroundColor: 'var(--theme-bg-2)', borderColor: 'var(--theme-accent)' }}>
+      <div className="p-6 border-b" style={{ borderColor: 'rgba(128,128,128,0.2)' }}>
         <div className="flex items-center gap-2">
-          <DocumentTextIcon className="h-8 w-8 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">Vector Search</h1>
+          <DocumentTextIcon className="h-8 w-8" style={{ color: 'var(--theme-accent)' }} />
+          <h1 className="text-xl font-bold" style={{ color: 'var(--theme-text)' }}>Vector Search</h1>
         </div>
       </div>
 
       <div className="p-6 space-y-6 flex-1">
         <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>
             Status
           </h3>
           {getStatusBadge()}
           {lastIndexed && (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs mt-2" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>
               Last indexed: {formatLastIndexed(lastIndexed)}
             </p>
           )}
@@ -59,14 +59,16 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
           <div className="space-y-2">
             <button
               onClick={onReindex}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-sm transition-colors"
+              style={{ color: 'var(--theme-text)', opacity: 0.7 }}
             >
               <ArrowPathIcon className="h-4 w-4" />
               Re-index Drive
             </button>
             <button
               onClick={onEditFolders}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 text-sm transition-colors"
+              style={{ color: 'var(--theme-text)', opacity: 0.7 }}
             >
               <FolderIcon className="h-4 w-4" />
               Edit folder selection
@@ -75,21 +77,22 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
         )}
       </div>
 
-      <div className="p-6 border-t border-gray-200">
+      <div className="p-6 border-t" style={{ borderColor: 'rgba(128,128,128,0.2)' }}>
         <div className="flex items-center gap-3 mb-3">
-          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-            <span className="text-sm font-medium text-blue-600">
+          <div className="h-8 w-8 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--theme-accent)', opacity: 0.15 }}>
+            <span className="text-sm font-medium" style={{ color: 'var(--theme-accent)' }}>
               {user?.email?.[0]?.toUpperCase()}
             </span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+            <p className="text-sm font-medium truncate" style={{ color: 'var(--theme-text)' }}>{user?.email}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={logout}
-            className="flex-1 text-sm text-gray-600 hover:text-gray-900 transition-colors text-left"
+            className="flex-1 text-sm transition-colors text-left"
+            style={{ color: 'var(--theme-text)', opacity: 0.7 }}
           >
             Sign out
           </button>
