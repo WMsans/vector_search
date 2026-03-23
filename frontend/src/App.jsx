@@ -8,7 +8,7 @@ import { ResultsList, ResultModal } from './components/search';
 import { OnboardingPrompt, IndexProgress } from './components/indexing';
 import { listFiles, downloadFile } from './services/drive';
 import { extractText } from './services/fileExtractors';
-import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments, getIndexedFileIds, getPendingDocuments, getModifiedFiles, updateDocumentStatus, deleteDocument } from './services/storage';
+import { getIndexStatus, deleteAllDocuments, saveDocument, saveChunks, getChunks, getDocuments, getIndexedFileIds, getPendingDocuments, getModifiedFiles, updateDocumentStatus, deleteDocument, saveFolderSelection, getFolderSelection } from './services/storage';
 import { loadModel, embedChunks, embedQuery, search, isModelLoaded } from './services/embeddings';
 
 function chunkText(text, chunkSize = 50, overlap = 5) {
@@ -58,7 +58,6 @@ function Dashboard() {
   const [results, setResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState(null);
-  const [indexingPlan, setIndexingPlan] = useState(null);
   const [selectedTypes, setSelectedTypes] = useState(['docx', 'pdf', 'pptx', 'txt']);
 
   useEffect(() => {
@@ -85,12 +84,15 @@ function Dashboard() {
     return () => { mounted = false; };
   }, [user?.googleId, goToReady, goToOnboarding, addToast]);
 
-  const handleIndex = async (selectedTypes = ['docx'], mode = 'full') => {
+  const handleIndex = async (selectedTypes = ['docx'], folderSelection = null, mode = 'full') => {
     startIndexing();
-    setIndexingPlan(null);
     setSelectedTypes(selectedTypes);
 
     try {
+      if (!folderSelection) {
+        folderSelection = await getFolderSelection(user.googleId);
+      }
+
       if (!isModelLoaded()) {
         updateIndexingStatus({ phase: 'loading', message: 'Loading AI model...', progress: 0 });
         await loadModel((progress) => {
@@ -101,7 +103,40 @@ function Dashboard() {
       }
 
       updateIndexingStatus({ phase: 'scanning', message: 'Scanning Google Drive...', progress: 30 });
-      const files = await listFiles(accessToken, selectedTypes);
+      
+      const folderIds = folderSelection?.selectedFolderIds?.length > 0 
+        ? folderSelection.selectedFolderIds 
+        : null;
+      const fileIds = folderSelection?.selectedFileIds?.length > 0 
+        ? folderSelection.selectedFileIds 
+        : null;
+      
+      let files = [];
+      
+      if (folderIds) {
+        files = await listFiles(accessToken, selectedTypes, folderIds);
+      }
+      
+      if (fileIds && fileIds.length > 0) {
+        const fileDetails = await Promise.all(
+          fileIds.map(async (id) => {
+            try {
+              const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?fields=id,name,mimeType,modifiedTime`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (res.ok) return res.json();
+            } catch (e) {
+              console.warn(`Failed to fetch file ${id}:`, e.message);
+            }
+            return null;
+          })
+        );
+        const validFiles = fileDetails.filter(f => f && f.id);
+        const existingIDs = new Set(files.map(f => f.id));
+        for (const f of validFiles) {
+          if (!existingIDs.has(f.id)) files.push(f);
+        }
+      }
 
       if (files.length === 0) {
         updateIndexingStatus({ phase: 'complete', message: 'No files found', progress: 100, documentCount: 0 });
@@ -109,8 +144,11 @@ function Dashboard() {
         return;
       }
 
+      if (folderSelection) {
+        await saveFolderSelection(user.googleId, folderSelection);
+      }
+
       const plan = await determineIndexingPlan(user.googleId, files);
-      setIndexingPlan(plan);
 
       if (mode === 'prompt' && (plan.resumeFiles.length > 0 || plan.newFiles.length > 0 || plan.modifiedFiles.length > 0)) {
         updateIndexingStatus({
@@ -232,9 +270,14 @@ function Dashboard() {
     }
   };
 
-  const handleReindex = () => {
+  const handleReindex = async () => {
     setResults(null);
-    handleIndex(['docx', 'pdf', 'pptx', 'txt'], 'prompt');
+    try {
+      const savedSelection = await getFolderSelection(user.googleId);
+      handleIndex(['docx', 'pdf', 'pptx', 'txt'], savedSelection, 'prompt');
+    } catch {
+      handleIndex(['docx', 'pdf', 'pptx', 'txt'], null, 'prompt');
+    }
   };
 
   const handleIndexingComplete = () => {
@@ -302,6 +345,7 @@ function Dashboard() {
         documentCount={documentCount}
         lastIndexed={lastIndexed}
         onReindex={handleReindex}
+        onEditFolders={goToOnboarding}
       >
         {appState === APP_STATES.ONBOARDING && (
           <OnboardingPrompt onIndex={handleIndex} />

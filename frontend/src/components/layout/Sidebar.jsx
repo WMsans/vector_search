@@ -1,8 +1,8 @@
 import { useAuth } from '../../hooks/useAuth';
 import { Badge } from '../common';
-import { DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { DocumentTextIcon, ArrowPathIcon, FolderIcon } from '@heroicons/react/24/outline';
 
-export default function Sidebar({ appState, documentCount, lastIndexed, onReindex }) {
+export default function Sidebar({ appState, documentCount, lastIndexed, onReindex, onEditFolders }) {
   const { user, logout } = useAuth();
 
   const getStatusBadge = () => {
@@ -53,13 +53,20 @@ export default function Sidebar({ appState, documentCount, lastIndexed, onReinde
         </div>
 
         {documentCount > 0 && appState !== 'indexing' && (
-          <div>
+          <div className="space-y-2">
             <button
               onClick={onReindex}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowPathIcon className="h-4 w-4" />
               Re-index Drive
+            </button>
+            <button
+              onClick={onEditFolders}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <FolderIcon className="h-4 w-4" />
+              Edit folder selection
             </button>
           </div>
         )}

@@ -2,10 +2,11 @@ import Dexie from 'dexie';
 
 const db = new Dexie('vectorSearchDB');
 
-db.version(3).stores({
+db.version(4).stores({
   userProfile: 'googleId',
   documents: '++id, googleId, driveFileId, title, fileType, indexedAt, driveModifiedTime, status, [googleId+driveFileId]',
   chunks: '++id, documentId, googleId',
+  folderSelection: 'googleId',
 });
 
 export async function saveUser(user) {
@@ -97,6 +98,23 @@ export async function deleteDocumentsByFileIds(googleId, fileIds) {
 export async function deleteDocument(docId) {
   await db.chunks.where('documentId').equals(docId).delete();
   await db.documents.delete(docId);
+}
+
+export async function saveFolderSelection(googleId, selection) {
+  await db.folderSelection.put({
+    googleId,
+    selectedFolderIds: selection.selectedFolderIds || [],
+    selectedFileIds: selection.selectedFileIds || [],
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function getFolderSelection(googleId) {
+  return db.folderSelection.get(googleId);
+}
+
+export async function clearFolderSelection(googleId) {
+  await db.folderSelection.delete(googleId);
 }
 
 export default db;
