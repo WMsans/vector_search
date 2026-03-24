@@ -62,7 +62,7 @@ export default function SearchBar({ accessToken, extensions, onSelect }) {
         onChange={(e) => setQuery(e.target.value)}
         className="w-full px-3 py-2 text-sm rounded-lg border"
         style={{
-          backgroundColor: 'var(--theme-bg)',
+          backgroundColor: 'var(--theme-bg-2)',
           borderColor: 'rgba(128,128,128,0.3)',
           color: 'var(--theme-text)',
         }}
@@ -71,7 +71,7 @@ export default function SearchBar({ accessToken, extensions, onSelect }) {
         <div
           className="absolute z-10 w-full mt-1 rounded-lg border max-h-52 overflow-auto"
           style={{
-            backgroundColor: 'var(--theme-bg)',
+            backgroundColor: 'var(--theme-bg-2)',
             borderColor: 'rgba(128,128,128,0.3)',
           }}
         >
