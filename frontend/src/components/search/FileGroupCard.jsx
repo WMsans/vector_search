@@ -8,7 +8,7 @@ export default function FileGroupCard({ group, onChunkClick }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const sortedChunks = [...group.chunks].sort((a, b) => b.score - a.score);
-  const bestScore = sortedChunks[0].score;
+  const bestScore = sortedChunks[0]?.score ?? 0;
   const totalChunks = sortedChunks.length;
   const previewChunks = sortedChunks.slice(0, PREVIEW_COUNT);
   const remainingChunks = sortedChunks.slice(PREVIEW_COUNT);
@@ -39,9 +39,9 @@ export default function FileGroupCard({ group, onChunkClick }) {
       <div className="p-4 space-y-3" style={{ backgroundColor: 'var(--theme-bg-1)' }}>
         {previewChunks.map((chunk, idx) => (
           <ChunkPreview
-            key={idx}
+            key={chunk.id || `preview-${idx}`}
             chunk={chunk}
-            onClick={() => onChunkClick(chunk)}
+            onClick={() => onChunkClick?.(chunk)}
           />
         ))}
 
@@ -58,9 +58,9 @@ export default function FileGroupCard({ group, onChunkClick }) {
 
         {isExpanded && remainingChunks.map((chunk, idx) => (
           <ChunkPreview
-            key={idx}
+            key={chunk.id || `remaining-${idx}`}
             chunk={chunk}
-            onClick={() => onChunkClick(chunk)}
+            onClick={() => onChunkClick?.(chunk)}
           />
         ))}
 
