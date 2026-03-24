@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import FolderTreeItem from './FolderTreeItem';
+import SearchBar from './SearchBar';
 import { listRootItems, listFolderContents } from '../../services/drive';
 import { Spinner } from '../common';
 
@@ -271,6 +272,12 @@ export default function FolderBrowser({
         <h3 className="text-lg font-semibold" style={{ color: 'var(--theme-text)' }}>Select folders to index</h3>
         <p className="text-sm" style={{ color: 'var(--theme-text)', opacity: 0.6 }}>Choose which folders and files to include in your search index</p>
       </div>
+      
+      <SearchBar
+        accessToken={accessToken}
+        extensions={extensions}
+        onSelect={handleToggle}
+      />
       
       <div className="flex gap-2 mb-3">
         <button
