@@ -9,7 +9,7 @@ vi.mock('./fileExtractors', () => ({
 
 import { searchDrive } from './drive';
 
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 describe('searchDrive', () => {
   beforeEach(() => {

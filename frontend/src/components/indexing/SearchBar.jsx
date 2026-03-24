@@ -21,7 +21,7 @@ export default function SearchBar({ accessToken, extensions, onSelect }) {
     try {
       const data = await searchDrive(accessToken, searchQuery, extensions);
       setResults(data.files || []);
-    } catch (err) {
+    } catch {
       setError('Search failed');
       setResults([]);
     } finally {
