@@ -1,8 +1,32 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import ResultCard from './search/ResultCard';
+import { useMemo } from 'react';
+import FileGroupCard from './search/FileGroupCard';
 import { ResultCardSkeleton } from './common/Skeleton';
 
 export default function ResultsList({ results, isLoading, onResultClick }) {
+  const groupedResults = useMemo(() => {
+    if (!results) return [];
+
+    const groups = results.reduce((acc, result) => {
+      const key = result.drive_file_id || result.title;
+      if (!acc[key]) {
+        acc[key] = {
+          driveFileId: key,
+          title: result.title,
+          chunks: [],
+        };
+      }
+      acc[key].chunks.push(result);
+      return acc;
+    }, {});
+
+    return Object.values(groups).sort((a, b) => {
+      const aBestScore = Math.max(...a.chunks.map(c => c.score));
+      const bBestScore = Math.max(...b.chunks.map(c => c.score));
+      return bBestScore - aBestScore;
+    });
+  }, [results]);
+
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
@@ -37,17 +61,16 @@ export default function ResultsList({ results, isLoading, onResultClick }) {
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-gray-600">
-          Found {results.length} result{results.length !== 1 ? 's' : ''}
+          Found {results.length} result{results.length !== 1 ? 's' : ''} in {groupedResults.length} file{groupedResults.length !== 1 ? 's' : ''}
         </p>
         <p className="text-xs text-gray-500">Sorted by relevance</p>
       </div>
-      <div className="space-y-4">
-        {results.map((result, idx) => (
-          <ResultCard
-            key={idx}
-            result={result}
-            rank={idx + 1}
-            onClick={() => onResultClick(result)}
+      <div>
+        {groupedResults.map((group, idx) => (
+          <FileGroupCard
+            key={group.driveFileId || idx}
+            group={group}
+            onChunkClick={onResultClick}
           />
         ))}
       </div>

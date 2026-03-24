@@ -18,6 +18,7 @@ export default function OnboardingPrompt({ onIndex }) {
   const [folderSelection, setFolderSelection] = useState({
     selectedFolderIds: [],
     selectedFileIds: [],
+    fileIdToParentFolder: {},
   });
   const [isLoadingSelection, setIsLoadingSelection] = useState(true);
 
@@ -30,6 +31,7 @@ export default function OnboardingPrompt({ onIndex }) {
           setFolderSelection({
             selectedFolderIds: saved.selectedFolderIds || [],
             selectedFileIds: saved.selectedFileIds || [],
+            fileIdToParentFolder: saved.fileIdToParentFolder || {},
           });
         }
       } catch (err) {

@@ -105,6 +105,7 @@ export async function saveFolderSelection(googleId, selection) {
     googleId,
     selectedFolderIds: selection.selectedFolderIds || [],
     selectedFileIds: selection.selectedFileIds || [],
+    fileIdToParentFolder: selection.fileIdToParentFolder || {},
     updatedAt: new Date().toISOString(),
   });
 }
