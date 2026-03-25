@@ -24,6 +24,17 @@ export async function getUserInfo(accessToken) {
   return res.json();
 }
 
+export async function searchDrive(accessToken, query, extensions = ['docx']) {
+  const mimeTypes = getMimeTypes(extensions);
+  const folderMime = "mimeType='application/vnd.google-apps.folder'";
+  const mimeQuery = mimeTypes.map(m => `mimeType='${m}'`).join(' or ');
+  const searchQuery = `(${folderMime} or ${mimeQuery}) and trashed=false and name contains '${query}'`;
+  const fields = 'files(id,name,mimeType)';
+  const url = `${DRIVE_API}/files?q=${encodeURIComponent(searchQuery)}&fields=${encodeURIComponent(fields)}&pageSize=50`;
+  const res = await fetchWithAuth(url, accessToken);
+  return res.json();
+}
+
 export async function listRootItems(accessToken, extensions = ['docx'], pageToken = null) {
   const mimeTypes = getMimeTypes(extensions);
   const folderMime = "mimeType='application/vnd.google-apps.folder'";
