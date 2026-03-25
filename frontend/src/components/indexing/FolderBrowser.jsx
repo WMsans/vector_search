@@ -122,17 +122,34 @@ export default function FolderBrowser({
     if (item.mimeType === 'application/vnd.google-apps.folder') {
       return selection.selectedFolderIds.includes(item.id);
     }
-    return selection.selectedFileIds.includes(item.id);
+    // A file is selected if explicitly in selectedFileIds OR if its parent folder is fully selected
+    if (selection.selectedFileIds.includes(item.id)) return true;
+    const parentFolderId = fileIdToParentFolder[item.id];
+    if (parentFolderId && selection.selectedFolderIds.includes(parentFolderId)) return true;
+    return false;
   };
 
   const isItemPartial = (item) => {
     if (item.mimeType !== 'application/vnd.google-apps.folder') return false;
     if (selection.selectedFolderIds.includes(item.id)) return false;
     
+    // Check via fileIdToParentFolder mapping
     const hasSelectedFiles = selection.selectedFileIds.some(
       fileId => fileIdToParentFolder[fileId] === item.id
     );
-    return hasSelectedFiles;
+    if (hasSelectedFiles) return true;
+    
+    // Also check loaded folder contents directly (handles cases where
+    // fileIdToParentFolder mapping isn't yet populated for all children)
+    const contents = folderContents[item.id];
+    if (contents) {
+      const childFileIds = contents
+        .filter(child => child.mimeType !== 'application/vnd.google-apps.folder')
+        .map(child => child.id);
+      return childFileIds.some(id => selection.selectedFileIds.includes(id));
+    }
+    
+    return false;
   };
 
   const handleToggle = useCallback((item) => {
@@ -144,21 +161,31 @@ export default function FolderBrowser({
       const childFileIds = contents
         .filter(child => child.mimeType !== 'application/vnd.google-apps.folder')
         .map(child => child.id);
+      // Also find files mapped to this folder via fileIdToParentFolder (covers cases
+      // where folder contents haven't been re-loaded, e.g., after page refresh)
+      const mappedFileIds = Object.entries(fileIdToParentFolder)
+        .filter(([, parentId]) => parentId === item.id)
+        .map(([fileId]) => fileId);
+      const allChildFileIds = [...new Set([...childFileIds, ...mappedFileIds])];
       
       if (isCurrentlySelected) {
+        // Deselect folder: remove folder and all its known children
         const newFileIdToParentFolder = { ...fileIdToParentFolder };
-        childFileIds.forEach(id => delete newFileIdToParentFolder[id]);
+        allChildFileIds.forEach(id => delete newFileIdToParentFolder[id]);
         onSelectionChange({
           selectedFolderIds: selection.selectedFolderIds.filter(id => id !== item.id),
-          selectedFileIds: selection.selectedFileIds.filter(id => !childFileIds.includes(id)),
+          selectedFileIds: selection.selectedFileIds.filter(id => !allChildFileIds.includes(id)),
           fileIdToParentFolder: newFileIdToParentFolder,
         });
       } else {
+        // Select folder: add folder and all its loaded children
         const newFileIdToParentFolder = { ...fileIdToParentFolder };
         childFileIds.forEach(id => {
           newFileIdToParentFolder[id] = item.id;
         });
         const newFileIds = [...new Set([...selection.selectedFileIds, ...childFileIds])];
+        // Also remove any individually-selected files that are children of this folder
+        // (they're now covered by the folder-level selection)
         onSelectionChange({
           selectedFolderIds: [...selection.selectedFolderIds, item.id],
           selectedFileIds: newFileIds,
@@ -166,20 +193,74 @@ export default function FolderBrowser({
         });
       }
     } else {
-      const currentList = selection.selectedFileIds;
-      if (currentList.includes(item.id)) {
-        const newFileIdToParentFolder = { ...fileIdToParentFolder };
-        delete newFileIdToParentFolder[item.id];
-        onSelectionChange({
-          ...selection,
-          selectedFileIds: currentList.filter(id => id !== item.id),
-          fileIdToParentFolder: newFileIdToParentFolder,
-        });
+      const parentFolderId = fileIdToParentFolder[item.id];
+      const parentIsSelected = parentFolderId && selection.selectedFolderIds.includes(parentFolderId);
+      const isCurrentlySelected = selection.selectedFileIds.includes(item.id) || parentIsSelected;
+      
+      if (isCurrentlySelected) {
+        // Deselecting a file
+        let newFolderIds = selection.selectedFolderIds;
+        let newFileIds = selection.selectedFileIds.filter(id => id !== item.id);
+        
+        if (parentIsSelected) {
+          // Demote: remove folder from selectedFolderIds, add all OTHER sibling files individually
+          newFolderIds = selection.selectedFolderIds.filter(id => id !== parentFolderId);
+          const siblingFiles = (folderContents[parentFolderId] || [])
+            .filter(child => child.mimeType !== 'application/vnd.google-apps.folder' && child.id !== item.id);
+          const siblingIds = siblingFiles.map(f => f.id);
+          newFileIds = [...new Set([...newFileIds, ...siblingIds])];
+          // Ensure sibling mappings exist
+          const newFileIdToParentFolder = { ...fileIdToParentFolder };
+          siblingFiles.forEach(f => { newFileIdToParentFolder[f.id] = parentFolderId; });
+          delete newFileIdToParentFolder[item.id];
+          onSelectionChange({
+            selectedFolderIds: newFolderIds,
+            selectedFileIds: newFileIds,
+            fileIdToParentFolder: newFileIdToParentFolder,
+          });
+        } else {
+          const newFileIdToParentFolder = { ...fileIdToParentFolder };
+          delete newFileIdToParentFolder[item.id];
+          onSelectionChange({
+            ...selection,
+            selectedFileIds: newFileIds,
+            fileIdToParentFolder: newFileIdToParentFolder,
+          });
+        }
       } else {
+        // Selecting a file
+        const newFileIds = [...selection.selectedFileIds, item.id];
+        const newFileIdToParentFolder = { ...fileIdToParentFolder };
+        // fileIdToParentFolder should already have the mapping from folder expansion,
+        // but ensure it's set if available from the item's parents array
+        if (parentFolderId) {
+          newFileIdToParentFolder[item.id] = parentFolderId;
+        }
+        
+        // Check if all sibling files are now selected → promote to folder selection
+        if (parentFolderId && folderContents[parentFolderId]) {
+          const allSiblingFileIds = folderContents[parentFolderId]
+            .filter(child => child.mimeType !== 'application/vnd.google-apps.folder')
+            .map(child => child.id);
+          const allSiblingsSelected = allSiblingFileIds.length > 0 && allSiblingFileIds.every(
+            id => id === item.id || newFileIds.includes(id)
+          );
+          
+          if (allSiblingsSelected) {
+            // Promote: add folder to selectedFolderIds, remove individual files from selectedFileIds
+            onSelectionChange({
+              selectedFolderIds: [...selection.selectedFolderIds, parentFolderId],
+              selectedFileIds: newFileIds,
+              fileIdToParentFolder: newFileIdToParentFolder,
+            });
+            return;
+          }
+        }
+        
         onSelectionChange({
           ...selection,
-          selectedFileIds: [...currentList, item.id],
-          fileIdToParentFolder,
+          selectedFileIds: newFileIds,
+          fileIdToParentFolder: newFileIdToParentFolder,
         });
       }
     }
