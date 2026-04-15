@@ -14,7 +14,7 @@ export default function ChunkPreview({ chunk, onClick }) {
   const handleOpen = (e) => {
     e.stopPropagation();
     if (chunk.drive_file_id) {
-      window.open(`https://docs.google.com/document/d/${chunk.drive_file_id}/edit`, '_blank', 'noopener,noreferrer');
+      window.open(`https://drive.google.com/file/d/${chunk.drive_file_id}/view`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -58,7 +58,7 @@ export default function ChunkPreview({ chunk, onClick }) {
               onClick={handleOpen}
               className="flex items-center gap-1 text-xs transition-colors"
               style={{ color: 'var(--theme-text)', opacity: 0.5 }}
-              title="Open in Google Docs"
+              title="Open in Google Drive"
             >
               <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
             </button>

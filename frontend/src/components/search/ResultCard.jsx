@@ -14,7 +14,7 @@ export default function ResultCard({ result, rank, onClick }) {
   const handleOpen = (e) => {
     e.stopPropagation();
     if (result.drive_file_id) {
-      window.open(`https://docs.google.com/document/d/${result.drive_file_id}/edit`, '_blank', 'noopener,noreferrer');
+      window.open(`https://drive.google.com/file/d/${result.drive_file_id}/view`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -73,7 +73,7 @@ export default function ResultCard({ result, rank, onClick }) {
               onClick={handleOpen}
               className="flex items-center gap-1 text-sm transition-colors"
               style={{ color: 'var(--theme-text)', opacity: 0.6 }}
-              title="Open in Google Docs"
+              title="Open in Google Drive"
             >
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
             </button>
