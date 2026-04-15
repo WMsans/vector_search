@@ -14,7 +14,7 @@ export default function ResultModal({ result, onClose }) {
 
   const handleOpen = () => {
     if (result.drive_file_id) {
-      window.open(`https://docs.google.com/document/d/${result.drive_file_id}/edit`, '_blank', 'noopener,noreferrer');
+      window.open(`https://drive.google.com/file/d/${result.drive_file_id}/view`, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -74,10 +74,10 @@ export default function ResultModal({ result, onClose }) {
               onClick={handleOpen}
               className="flex items-center gap-2 px-4 py-2 transition-colors"
               style={{ color: 'var(--theme-text)', opacity: 0.8 }}
-              title="Open in Google Docs"
+              title="Open in Google Drive"
             >
               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-              Open in Docs
+              Open in Drive
             </button>
           )}
           <button
